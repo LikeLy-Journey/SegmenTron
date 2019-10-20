@@ -1,0 +1,13 @@
+EPOCHS: 200
+EVAL_CROP_SIZE: (1025, 2049) # (width, height), for unpadding rangescaling and stepscaling
+TRAIN_CROP_SIZE: 769 # (width, height), for unpadding rangescaling and stepscaling
+BATCH_SIZE: 4
+MEAN: [0.5, 0.5, 0.5]
+STD: [0.5, 0.5, 0.5]
+DATASET: "cityscape"
+
+MODEL:
+    MODEL_NAME: "deeplabv3_plus"
+    BACKBONE: "xception65"
+TRAIN:
+    PRETRAINED_MODEL_PATH: "../runs/checkpoints/deeplabv3_plus_xception65_cityscape_2019-10-20-15-03/1.pth"
