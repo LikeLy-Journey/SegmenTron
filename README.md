@@ -2,11 +2,13 @@
 
 Segmentation is what you need. Support deeplapv3 plus now.
 
-|Model|Backbone|Datasets|TrainSet|EvalSet|eval size|epochs|Mean IoU(paper)|Mean IoU(this repo)|
-|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-|DeepLabv3_plus|xception65|cityscape|train|val|(1025,2049)|60|78.8|78.5|
-
 ![](./demo.png)
+
+## Model zoo
+
+|Model|Backbone|Datasets|eval size|Mean IoU(paper)|Mean IoU(this repo)|
+|:-:|:-:|:-:|:-:|:-:|:-:|
+|DeepLabv3_plus|xception65|cityscape(val)|(1025,2049)|78.8|78.5|
 
 ## Environments
 
@@ -17,13 +19,11 @@ Segmentation is what you need. Support deeplapv3 plus now.
 - pyyaml
 - Pillow
 - numpy
-- tqdm
-- requests
 
 
 ## Dataset prepare
 
-Goto[Cityscape](https://www.cityscapes-dataset.com)register a account and download datasets.
+Goto [Cityscape](https://www.cityscapes-dataset.com) register a account and download datasets.
 put cityscape data as follow:
 ```
 datasets/cityscape/
