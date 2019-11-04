@@ -2,13 +2,14 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from .segbase import SegBaseModel
 from .backbones import get_xception, get_resnet
 from ..modules import _ConvBNReLU, SeparableConv2d, _ASPP, _FCNHead
 from ..utils.config import cfg
 __all__ = ['DeepLabV3Plus', 'get_deeplabv3_plus', 'get_deeplabv3_plus_xception_voc']
 
 
-class DeepLabV3Plus(nn.Module):
+class DeepLabV3Plus(SegBaseModel):
     r"""DeepLabV3Plus
     Parameters
     ----------
@@ -18,18 +19,7 @@ class DeepLabV3Plus(nn.Module):
     """
 
     def __init__(self, nclass):
-        super(DeepLabV3Plus, self).__init__()
-        self.aux = cfg.SOLVER.AUX
-        self.nclass = nclass
-
-        backbone = cfg.MODEL.BACKBONE.lower()
-        if backbone.startswith('xception'):
-            self.encoder = get_xception(backbone)
-        elif backbone.startswith('resnet'):
-            self.encoder = get_resnet(backbone)
-        else:
-            raise RuntimeError('unknown backbone: {}'.format(backbone))
-
+        super(DeepLabV3Plus, self).__init__(nclass)
         self.head = _DeepLabHead(nclass)
         if self.aux:
             self.auxlayer = _FCNHead(728, nclass)

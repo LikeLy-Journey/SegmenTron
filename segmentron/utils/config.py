@@ -105,12 +105,16 @@ class SegConfig(dict):
 cfg = SegConfig()
 
 ########################## basic set ###########################################
+# random seed
+cfg.SEED = 1024
 # mean
 cfg.MEAN = [0.5, 0.5, 0.5]
 # std
 cfg.STD = [0.5, 0.5, 0.5]
 # batch size
 cfg.BATCH_SIZE = 1
+# test batch size
+cfg.TEST_BATCH_SIZE = 1
 # eval crop size
 cfg.EVAL_CROP_SIZE = tuple()
 # train crop size
@@ -121,6 +125,8 @@ cfg.TRAIN_BASE_SIZE = 1024
 cfg.EPOCHS = 30
 # train time stamp
 cfg.TIME_STAMP = ''
+# model phase ['train', 'val']
+cfg.PHASE = 'train'
 
 ########################## dataset config #########################################
 # dataset name
@@ -136,14 +142,14 @@ cfg.AUG.RICH_CROP.BLUR = False
 # data augment blur rator
 cfg.AUG.RICH_CROP.BLUR_RATIO = 0.1
 
-########################### 训练配置 ##########################################
+########################### train config ##########################################
 # model output dir
 cfg.TRAIN.MODEL_SAVE_DIR = '../runs/checkpoints/'
 # log dir
 cfg.TRAIN.LOG_SAVE_DIR = '../runs/logs/'
 # pretrained model for eval or finetune
 cfg.TRAIN.PRETRAINED_MODEL_PATH = ''
-#
+# use pretrained backbone model over imagenet
 cfg.TRAIN.BACKBONE_PRETRAINED = True
 # backbone pretrained model path, if not specific, will load from url when backbone pretrained enabled
 cfg.TRAIN.BACKBONE_PRETRAINED_PATH = ''
@@ -152,12 +158,12 @@ cfg.TRAIN.RESUME_MODEL_PATH = ''
 # whether to use synchronize bn
 cfg.TRAIN.SYNC_BATCH_NORM = True
 # save model every checkpoint-epoch
-cfg.TRAIN.SNAPSHOT_EPOCH = 5
+cfg.TRAIN.SNAPSHOT_EPOCH = 10
 
-########################### 模型优化相关配置 ##################################
+########################### optimizer config ##################################
 # base learning rate
 cfg.SOLVER.LR = 1e-4
-#
+# decoder lr x10
 cfg.SOLVER.DECODER_LR_FACTOR = 10.0
 # lr scheduler mode
 cfg.SOLVER.LR_SCHEDULER = "poly"
@@ -172,7 +178,7 @@ cfg.SOLVER.POWER = 0.9
 # step gamma
 cfg.SOLVER.GAMMA = 0.1
 #
-cfg.SOLVER.EPSILON = 1e-5
+cfg.SOLVER.EPSILON = 1e-8
 # step milestone
 cfg.SOLVER.DECAY_EPOCH = [10, 20]
 # weight decay
@@ -191,16 +197,16 @@ cfg.SOLVER.START_EPOCH = 0
 cfg.SOLVER.LOSS = ["softmax_loss"]
 #
 cfg.SOLVER.OHEM = False
-#
+# whether to use aux loss
 cfg.SOLVER.AUX = False
-#
+# aux loss weight
 cfg.SOLVER.AUX_WEIGHT = 0.4
 
-########################## 测试配置 ###########################################
-# 测试模型路径
-cfg.TEST.TEST_MODEL = ''
+########################## test ###########################################
+# val/test model path
+cfg.TEST.TEST_MODEL_PATH = ''
 
-########################## 模型通用配置 #######################################
+########################## model #######################################
 # model name
 cfg.MODEL.MODEL_NAME = ''
 # model backbone
@@ -209,21 +215,24 @@ cfg.MODEL.BACKBONE = ''
 cfg.MODEL.RESNET_VARIANT = 'b'
 # BatchNorm: bn、gn(group_norm)
 cfg.MODEL.DEFAULT_NORM_TYPE = 'bn'
-#
+# multi branch loss weight
 cfg.MODEL.MULTI_LOSS_WEIGHT = [1.0]
 # gn groups
 cfg.MODEL.DEFAULT_GROUP_NUMBER = 32
-#
+# whole model default epsilon
 cfg.MODEL.DEFAULT_EPSILON = 1e-5
-#
-cfg.MODEL.BN_EPS_FOR_ENCODER = 1e-3
-#
+# batch norm epsilon for encoder, if set None will use api default value.
+cfg.MODEL.BN_EPS_FOR_ENCODER = None
+# batch norm epsilon for encoder, if set None will use api default value.
 cfg.MODEL.BN_EPS_FOR_DECODER = None
-#
+# backbone output stride
 cfg.MODEL.OUTPUT_STRIDE = 16
-# BatchNorm momentum
+# BatchNorm momentum, if set None will use api default value.
 cfg.MODEL.BN_MOMENTUM = None
-
+#
+cfg.MODEL.DANET_MULTI_DILATION = None
+#
+cfg.MODEL.DANET_MULTI_GRID = False
 
 ########################## DeepLab config ####################################
 # DeepLab backbone

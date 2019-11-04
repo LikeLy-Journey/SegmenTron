@@ -25,11 +25,20 @@ class MixSoftmaxCrossEntropyLoss(nn.CrossEntropyLoss):
             loss += self.aux_weight * aux_loss
         return loss
 
+    def _multiple_forward(self, *inputs):
+        *preds, target = tuple(inputs)
+        loss = super(MixSoftmaxCrossEntropyLoss, self).forward(preds[0], target)
+        for i in range(1, len(preds)):
+            loss += super(MixSoftmaxCrossEntropyLoss, self).forward(preds[i], target)
+        return loss
+
     def forward(self, *inputs, **kwargs):
         preds, target = tuple(inputs)
         inputs = tuple(list(preds) + [target])
         if self.aux:
             return dict(loss=self._aux_forward(*inputs))
+        elif len(preds) > 1:
+            return dict(loss=self._multiple_forward(*inputs))
         else:
             return dict(loss=super(MixSoftmaxCrossEntropyLoss, self).forward(*inputs))
 

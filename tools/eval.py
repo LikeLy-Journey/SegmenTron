@@ -39,7 +39,7 @@ class Evaluator(object):
         # dataset and dataloader
         val_dataset = get_segmentation_dataset(cfg.DATASET, split='val', mode='testval', transform=input_transform)
         val_sampler = make_data_sampler(val_dataset, False, args.distributed)
-        val_batch_sampler = make_batch_data_sampler(val_sampler, images_per_batch=cfg.BATCH_SIZE, drop_last=False)
+        val_batch_sampler = make_batch_data_sampler(val_sampler, images_per_batch=cfg.TEST_BATCH_SIZE, drop_last=False)
         self.val_loader = data.DataLoader(dataset=val_dataset,
                                           batch_sampler=val_batch_sampler,
                                           num_workers=cfg.WORKERS,
@@ -71,6 +71,7 @@ class Evaluator(object):
             model = self.model.module
         else:
             model = self.model
+
         logging.info("Start validation, Total sample: {:d}".format(len(self.val_loader)))
         for i, (image, target, filename) in enumerate(self.val_loader):
             image = image.to(self.device)
@@ -105,6 +106,7 @@ class Evaluator(object):
 if __name__ == '__main__':
     args = parse_args()
     cfg.update_from_file(args.config_file)
+    cfg.PHASE = 'val'
     cfg.check_and_infer()
     num_gpus = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
     args.distributed = num_gpus > 1

@@ -1,6 +1,7 @@
 import torch
 import logging
 from .deeplabv3_plus import *
+from .danet import get_danet
 from ..utils.config import cfg
 __all__ = ['get_model', 'get_model_list', 'get_segmentation_model']
 
@@ -26,10 +27,16 @@ def get_model_list():
 def get_segmentation_model():
     models = {
         'deeplabv3_plus': get_deeplabv3_plus,
+        'danet': get_danet,
     }
     model = models[cfg.MODEL.MODEL_NAME]()
-    if cfg.TRAIN.PRETRAINED_MODEL_PATH:
-        logging.info('load pretrained model from {}'.format(cfg.TRAIN.PRETRAINED_MODEL_PATH))
-        msg = model.load_state_dict(torch.load(cfg.TRAIN.PRETRAINED_MODEL_PATH))
+    if cfg.PHASE == 'train':
+        if cfg.TRAIN.PRETRAINED_MODEL_PATH:
+            logging.info('load pretrained model from {}'.format(cfg.TRAIN.PRETRAINED_MODEL_PATH))
+            msg = model.load_state_dict(torch.load(cfg.TRAIN.PRETRAINED_MODEL_PATH))
+            logging.info(msg)
+    else:
+        logging.info('load test model from {}'.format(cfg.TEST.TEST_MODEL_PATH))
+        msg = model.load_state_dict(torch.load(cfg.TEST.TEST_MODEL_PATH))
         logging.info(msg)
     return model

@@ -1,9 +1,10 @@
 """Base Model for Semantic Segmentation"""
 import torch.nn as nn
 
-from ..modules import JPU
-from .backbones.resnetv1b import resnet50_v1s, resnet101_v1s, resnet152_v1s
-
+# from ..modules import JPU
+from .backbones.resnet import get_resnet#resnet50_v1s, resnet101_v1s, resnet152_v1s
+from .backbones.xception import get_xception
+from ..utils.config import cfg
 __all__ = ['SegBaseModel']
 
 
@@ -17,21 +18,20 @@ class SegBaseModel(nn.Module):
         'resnet101' or 'resnet152').
     """
 
-    def __init__(self, nclass, aux, backbone='resnet50', jpu=False, pretrained_base=True, **kwargs):
+    def __init__(self, nclass):
         super(SegBaseModel, self).__init__()
-        dilated = False if jpu else True
-        self.aux = aux
+        self.aux = cfg.SOLVER.AUX
         self.nclass = nclass
-        if backbone == 'resnet50':
-            self.pretrained = resnet50_v1s(pretrained=pretrained_base, dilated=dilated, **kwargs)
-        elif backbone == 'resnet101':
-            self.pretrained = resnet101_v1s(pretrained=pretrained_base, dilated=dilated, **kwargs)
-        elif backbone == 'resnet152':
-            self.pretrained = resnet152_v1s(pretrained=pretrained_base, dilated=dilated, **kwargs)
+        self.get_backbone()
+
+    def get_backbone(self):
+        backbone = cfg.MODEL.BACKBONE.lower()
+        if backbone.startswith('xception'):
+            self.encoder = get_xception(backbone)
+        elif backbone.startswith('resnet'):
+            self.encoder = get_resnet(backbone)
         else:
             raise RuntimeError('unknown backbone: {}'.format(backbone))
-
-        self.jpu = JPU([512, 1024, 2048], width=512, **kwargs) if jpu else None
 
     def base_forward(self, x):
         """forwarding pre-trained network"""
@@ -44,10 +44,7 @@ class SegBaseModel(nn.Module):
         c3 = self.pretrained.layer3(c2)
         c4 = self.pretrained.layer4(c3)
 
-        if self.jpu:
-            return self.jpu(c1, c2, c3, c4)
-        else:
-            return c1, c2, c3, c4
+        return c1, c2, c3, c4
 
     def evaluate(self, x):
         """evaluating network with inputs and targets"""

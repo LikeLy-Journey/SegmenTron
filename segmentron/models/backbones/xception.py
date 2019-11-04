@@ -146,15 +146,15 @@ class Xception65(nn.Module):
 # Constructor
 def get_xception(backbone):
     model = Xception65(cfg.MODEL.OUTPUT_STRIDE)
-    if cfg.TRAIN.BACKBONE_PRETRAINED and (not cfg.TRAIN.PRETRAINED_MODEL_PATH):
-        if os.path.isfile(cfg.TRAIN.BACKBONE_PRETRAINED_PATH) and os.path.exists(cfg.TRAIN.BACKBONE_PRETRAINED_PATH):
+    if cfg.PHASE == 'train' and cfg.TRAIN.BACKBONE_PRETRAINED and (not cfg.TRAIN.PRETRAINED_MODEL_PATH):
+        if os.path.isfile(cfg.TRAIN.BACKBONE_PRETRAINED_PATH):
             logging.info('Load backbone pretrained model from {}'.format(
                 cfg.TRAIN.BACKBONE_PRETRAINED_PATH
             ))
             msg = model.load_state_dict(torch.load(cfg.TRAIN.BACKBONE_PRETRAINED_PATH))
             logging.info(msg)
         else:
-            logging.info('load backbone pretrained model from url')
+            logging.info('load backbone pretrained model from url..')
             msg = model.load_state_dict(model_zoo.load_url(model_urls[backbone]))
             logging.info(msg)
     return model

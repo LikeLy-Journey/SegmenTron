@@ -1,0 +1,20 @@
+EPOCHS: 240
+EVAL_CROP_SIZE: (1024, 2048)
+TRAIN_CROP_SIZE: 768
+BATCH_SIZE: 2
+MEAN: [0.485, 0.456, 0.406]
+STD: [0.229, 0.224, 0.225]
+DATASET: "cityscape"
+
+MODEL:
+    MODEL_NAME: "danet"
+    BACKBONE: "resnet101"
+    OUTPUT_STRIDE: 8
+    DANET_MULTI_GRID: True
+    DANET_MULTI_DILATION: [4, 8, 16]
+
+TEST:
+    TEST_MODEL_PATH: ../trained_models/danet101-official.pth
+
+SOLVER:
+    LR: 0.003
