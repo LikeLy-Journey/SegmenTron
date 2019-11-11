@@ -1,6 +1,7 @@
+# PyTorch for Semantic Segmentation
 ## Introduce
-
-Segmentation is what you need. Support deeplapv3 plus now.
+This repository contains some models for semantic segmentation and the pipeline of training and testing models, 
+implemented in PyTorch.
 
 ![](./demo.png)
 
