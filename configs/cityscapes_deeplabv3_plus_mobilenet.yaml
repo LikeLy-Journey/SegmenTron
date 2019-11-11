@@ -9,12 +9,13 @@ TRAIN:
 TEST:
     BATCH_SIZE: 4
     CROP_SIZE: (1025, 2049)
-    TEST_MODEL_PATH: ../trained_models/deeplabv3_plus_resnet101_segmentron.pth
+#    TEST_MODEL_PATH: ../trained_models/deeplabv3_plus_resnet101_segmentron.pth
 
 SOLVER:
     LR: 0.02
 
 MODEL:
     MODEL_NAME: "deeplabv3_plus"
-    BACKBONE: "resnet101"
+    BACKBONE: "mobilenetv2"
+    OUTPUT_STRIDE: 32
 

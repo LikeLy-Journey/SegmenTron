@@ -6,7 +6,7 @@ import numpy as np
 
 from tqdm import trange
 from PIL import Image
-from .segbase import SegmentationDataset
+from .seg_data_base import SegmentationDataset
 
 
 class COCOSegmentation(SegmentationDataset):

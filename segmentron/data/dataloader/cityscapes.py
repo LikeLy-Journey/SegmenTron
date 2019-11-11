@@ -5,7 +5,7 @@ import numpy as np
 import logging
 
 from PIL import Image
-from .segbase import SegmentationDataset
+from .seg_data_base import SegmentationDataset
 
 
 class CitySegmentation(SegmentationDataset):
