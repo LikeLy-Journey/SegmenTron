@@ -6,18 +6,17 @@ TRAIN:
     EPOCHS: 240
     BATCH_SIZE: 4
     CROP_SIZE: 768
+    BACKBONE_PRETRAINED: False
 TEST:
-    BATCH_SIZE: 1
+    BATCH_SIZE: 4
     CROP_SIZE: (1024, 2048)
-    TEST_MODEL_PATH: ../trained_models/danet101_segmentron.pth
+#    TEST_MODEL_PATH: ../trained_models/icnet_plus_resnet101_segmentron.pth
 
 SOLVER:
-    LR: 0.003
+    LR: 0.01
 
 MODEL:
-    MODEL_NAME: "danet"
-    BACKBONE: "resnet101"
+    MODEL_NAME: "icnet"
+    BACKBONE: "resnet50"
     OUTPUT_STRIDE: 8
-    DANET:
-        MULTI_GRID: True
-        MULTI_DILATION: [4, 8, 16]
+    BACKBONE_SCALE: 0.5

@@ -2,22 +2,11 @@ import os
 import logging
 import torch
 import torch.nn as nn
-import torch.utils.model_zoo as model_zoo
+from .utils import load_backbone_pretrained
 
-from ...utils.config import cfg
+from ...config import cfg
 
 __all__ = ['ResNetV1', 'get_resnet']
-
-model_urls = {
-    'resnet18b': 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
-    'resnet34b': 'https://download.pytorch.org/models/resnet34-333f7ec4.pth',
-    'resnet50b': 'https://download.pytorch.org/models/resnet50-19c8e357.pth',
-    'resnet101b': 'https://download.pytorch.org/models/resnet101-5d3b4d8f.pth',
-    'resnet152b': 'https://download.pytorch.org/models/resnet152-b121ed2d.pth',
-    'resnet50c': 'https://github.com/LikeLy-Journey/SegmenTron/releases/download/v0.1.0/resnet50-25c4b509.pth',
-    'resnet101c': 'https://github.com/LikeLy-Journey/SegmenTron/releases/download/v0.1.0/resnet101-2a57e44d.pth',
-    'resnet152c': 'https://github.com/LikeLy-Journey/SegmenTron/releases/download/v0.1.0/resnet152-0d43d698.pth',
-}
 
 
 class BasicBlockV1b(nn.Module):
@@ -97,9 +86,10 @@ class BottleneckV1b(nn.Module):
 
 class ResNetV1(nn.Module):
 
-    def __init__(self, block, layers, num_classes=1000, dilated=True, deep_stem=False,
+    def __init__(self, block, layers, num_classes=1000, deep_stem=False,
                  zero_init_residual=False, norm_layer=nn.BatchNorm2d):
         output_stride = cfg.MODEL.OUTPUT_STRIDE
+        scale = cfg.MODEL.BACKBONE_SCALE
         if output_stride == 32:
             dilations = [1, 1]
             strides = [2, 2]
@@ -111,35 +101,36 @@ class ResNetV1(nn.Module):
             strides = [1, 1]
         else:
             raise NotImplementedError
-        self.inplanes = 128 if deep_stem else 64
+        self.inplanes = int((128 if deep_stem else 64) * scale)
         super(ResNetV1, self).__init__()
         if deep_stem:
             # resnet vc
+            mid_channel = int(64 * scale)
             self.conv1 = nn.Sequential(
-                nn.Conv2d(3, 64, 3, 2, 1, bias=False),
-                norm_layer(64),
+                nn.Conv2d(3, mid_channel, 3, 2, 1, bias=False),
+                norm_layer(mid_channel),
                 nn.ReLU(True),
-                nn.Conv2d(64, 64, 3, 1, 1, bias=False),
-                norm_layer(64),
+                nn.Conv2d(mid_channel, mid_channel, 3, 1, 1, bias=False),
+                norm_layer(mid_channel),
                 nn.ReLU(True),
-                nn.Conv2d(64, 128, 3, 1, 1, bias=False)
+                nn.Conv2d(mid_channel, self.inplanes, 3, 1, 1, bias=False)
             )
         else:
-            self.conv1 = nn.Conv2d(3, 64, 7, 2, 3, bias=False)
+            self.conv1 = nn.Conv2d(3, self.inplanes, 7, 2, 3, bias=False)
         self.bn1 = norm_layer(self.inplanes)
         self.relu = nn.ReLU(True)
         self.maxpool = nn.MaxPool2d(3, 2, 1)
-        self.layer1 = self._make_layer(block, 64, layers[0], norm_layer=norm_layer)
-        self.layer2 = self._make_layer(block, 128, layers[1], stride=2, norm_layer=norm_layer)
+        self.layer1 = self._make_layer(block, int(64 * scale), layers[0], norm_layer=norm_layer)
+        self.layer2 = self._make_layer(block, int(128 * scale), layers[1], stride=2, norm_layer=norm_layer)
 
-        self.layer3 = self._make_layer(block, 256, layers[2], stride=strides[0], dilation=dilations[0],
+        self.layer3 = self._make_layer(block, int(256 * scale), layers[2], stride=strides[0], dilation=dilations[0],
                                        norm_layer=norm_layer)
-        self.layer4 = self._make_layer(block, 512, layers[3], stride=strides[1], dilation=dilations[1],
-                                       norm_layer=norm_layer, multi_grid=cfg.MODEL.DANET_MULTI_GRID,
-                                       multi_dilation=cfg.MODEL.DANET_MULTI_DILATION)
+        self.layer4 = self._make_layer(block, int(512 * scale), layers[3], stride=strides[1], dilation=dilations[1],
+                                       norm_layer=norm_layer, multi_grid=cfg.MODEL.DANET.MULTI_GRID,
+                                       multi_dilation=cfg.MODEL.DANET.MULTI_DILATION)
 
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        self.fc = nn.Linear(512 * block.expansion, num_classes)
+        self.fc = nn.Linear(int(512 * block.expansion * scale), num_classes)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -188,15 +179,7 @@ class ResNetV1(nn.Module):
             for _ in range(1, blocks):
                 layers.append(block(self.inplanes, planes, dilation=dilation,
                                     previous_dilation=dilation, norm_layer=norm_layer))
-        # if multi_grid:
-        #     div = len(multi_dilation)
-        #     for i in range(1,blocks):
-        #         layers.append(block(self.inplanes, planes, dilation=multi_dilation[i%div], previous_dilation=dilation,
-        #                                             norm_layer=norm_layer))
-        # else:
-        #     for i in range(1, blocks):
-        #         layers.append(block(self.inplanes, planes, dilation=dilation, previous_dilation=dilation,
-        #                         norm_layer=norm_layer))
+
         return nn.Sequential(*layers)
 
     def forward(self, x):
@@ -215,10 +198,9 @@ class ResNetV1(nn.Module):
         # x = x.view(x.size(0), -1)
         # x = self.fc(x)
 
-        return c1, c3, c4
+        return c1, c2, c3, c4
 
-
-def get_resnet(backbone):
+def get_resnet(backbone, norm_layer=nn.BatchNorm2d):
     resnet_blocks = {
         'resnet18': [2, 2, 2, 2],
         'resnet34': [3, 4, 6, 3],
@@ -227,17 +209,7 @@ def get_resnet(backbone):
         'resnet152': [3, 8, 36, 3],
     }
     deep_stem = cfg.MODEL.RESNET_VARIANT == 'c'
-    model = ResNetV1(BottleneckV1b, resnet_blocks[backbone], deep_stem=deep_stem)
-    if cfg.PHASE == 'train' and cfg.TRAIN.BACKBONE_PRETRAINED and (not cfg.TRAIN.PRETRAINED_MODEL_PATH):
-        if os.path.isfile(cfg.TRAIN.BACKBONE_PRETRAINED_PATH) and os.path.exists(cfg.TRAIN.BACKBONE_PRETRAINED_PATH):
-            logging.info('Load backbone pretrained model from {}'.format(
-                cfg.TRAIN.BACKBONE_PRETRAINED_PATH
-            ))
-            msg = model.load_state_dict(torch.load(cfg.TRAIN.BACKBONE_PRETRAINED_PATH))
-            logging.info(msg)
-        else:
-            logging.info('load backbone pretrained model from url..')
-            msg = model.load_state_dict(model_zoo.load_url(model_urls[backbone + cfg.MODEL.RESNET_VARIANT]))
-            logging.info(msg)
+    model = ResNetV1(BottleneckV1b, resnet_blocks[backbone], deep_stem=deep_stem, norm_layer=norm_layer)
+    load_backbone_pretrained(model, backbone + cfg.MODEL.RESNET_VARIANT)
     return model
 

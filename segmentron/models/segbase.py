@@ -1,49 +1,41 @@
 """Base Model for Semantic Segmentation"""
 import torch.nn as nn
 
-# from ..modules import JPU
-from .backbones.resnet import get_resnet#resnet50_v1s, resnet101_v1s, resnet152_v1s
+from .backbones.resnet import get_resnet
 from .backbones.xception import get_xception
-from ..utils.config import cfg
+from .backbones.mobilenet import get_mobilenet
+from .backbones.hrnet import get_hrnet
+from ..modules import get_norm
+from ..config import cfg
 __all__ = ['SegBaseModel']
 
 
 class SegBaseModel(nn.Module):
     r"""Base Model for Semantic Segmentation
-
-    Parameters
-    ----------
-    backbone : string
-        Pre-trained dilated backbone network type (default:'resnet50'; 'resnet50',
-        'resnet101' or 'resnet152').
     """
-
     def __init__(self, nclass):
         super(SegBaseModel, self).__init__()
-        self.aux = cfg.SOLVER.AUX
         self.nclass = nclass
+        self.aux = cfg.SOLVER.AUX
+        self.norm_layer = get_norm(cfg.MODEL.BN_TYPE)
         self.get_backbone()
 
     def get_backbone(self):
-        backbone = cfg.MODEL.BACKBONE.lower()
-        if backbone.startswith('xception'):
-            self.encoder = get_xception(backbone)
-        elif backbone.startswith('resnet'):
-            self.encoder = get_resnet(backbone)
+        self.backbone = cfg.MODEL.BACKBONE.lower()
+        if self.backbone.startswith('xception'):
+            self.encoder = get_xception(self.backbone, self.norm_layer)
+        elif self.backbone.startswith('resnet'):
+            self.encoder = get_resnet(self.backbone, self.norm_layer)
+        elif self.backbone.startswith('mobilenet'):
+            self.encoder = get_mobilenet(self.backbone, self.norm_layer)
+        elif self.backbone.startswith('hrnet'):
+            self.encoder = get_hrnet(self.backbone, self.norm_layer)
         else:
-            raise RuntimeError('unknown backbone: {}'.format(backbone))
+            raise RuntimeError('unknown backbone: {}'.format(self.backbone))
 
     def base_forward(self, x):
-        """forwarding pre-trained network"""
-        x = self.pretrained.conv1(x)
-        x = self.pretrained.bn1(x)
-        x = self.pretrained.relu(x)
-        x = self.pretrained.maxpool(x)
-        c1 = self.pretrained.layer1(x)
-        c2 = self.pretrained.layer2(c1)
-        c3 = self.pretrained.layer3(c2)
-        c4 = self.pretrained.layer4(c3)
-
+        """forwarding backbone network"""
+        c1, c2, c3, c4 = self.encoder(x)
         return c1, c2, c3, c4
 
     def evaluate(self, x):

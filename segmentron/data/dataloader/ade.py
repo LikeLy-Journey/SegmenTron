@@ -4,7 +4,7 @@ import torch
 import numpy as np
 
 from PIL import Image
-from .segbase import SegmentationDataset
+from .seg_data_base import SegmentationDataset
 
 
 class ADE20KSegmentation(SegmentationDataset):

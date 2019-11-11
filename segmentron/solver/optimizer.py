@@ -1,8 +1,8 @@
 import logging
-import torch
 import torch.nn as nn
-from torch import optim as optim
-from .config import cfg
+
+from torch import optim
+from segmentron.config import cfg
 
 
 def _set_batch_norm_attr(named_modules, attr, value):

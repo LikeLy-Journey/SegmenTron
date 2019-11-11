@@ -4,7 +4,7 @@ import torch
 import numpy as np
 
 from PIL import Image
-from segmentron.data.dataloader.segbase import SegmentationDataset
+from segmentron.data.dataloader.seg_data_base import SegmentationDataset
 
 
 class LIPSegmentation(SegmentationDataset):

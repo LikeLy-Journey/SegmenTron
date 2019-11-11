@@ -6,7 +6,7 @@ import torch.nn.functional as F
 
 from .segbase import SegBaseModel
 from ..modules import _FCNHead
-from ..utils.config import cfg
+from ..config import cfg
 
 __all__ = ['DANet', 'get_danet']
 
@@ -82,17 +82,6 @@ class DANet(SegBaseModel):
     ----------
     nclass : int
         Number of categories for the training dataset.
-    backbone : string
-        Pre-trained dilated backbone network type (default:'resnet50'; 'resnet50',
-        'resnet101' or 'resnet152').
-    norm_layer : object
-        Normalization layer used in backbone network (default: :class:`mxnet.gluon.nn.BatchNorm`;
-
-
-    Reference:
-
-        Long, Jonathan, Evan Shelhamer, and Trevor Darrell. "Fully convolutional networks
-        for semantic segmentation." *CVPR*, 2015
 
     """
     def __init__(self, nclass):
@@ -104,7 +93,7 @@ class DANet(SegBaseModel):
 
     def forward(self, x):
         imsize = x.size()[2:]
-        _, c3, c4 = self.encoder(x)
+        _, _, c3, c4 = self.encoder(x)
 
         x = self.head(c4)
         x = list(x)
@@ -168,8 +157,7 @@ def get_danet():
     r"""DANet model from the paper `"Dual Attention Network for Scene Segmentation"
     <https://arxiv.org/abs/1809.02983.pdf>`
     """
-
     from ..data.dataloader import datasets
-    model = DANet(datasets[cfg.DATASET].NUM_CLASS)
+    model = DANet(datasets[cfg.DATASET.NAME].NUM_CLASS)
     return model
 

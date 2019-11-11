@@ -11,19 +11,16 @@ import logging
 import torch
 import torch.nn as nn
 import torch.utils.data as data
-import torch.backends.cudnn as cudnn
 import torch.nn.functional as F
 
 from torchvision import transforms
 from segmentron.data.dataloader import get_segmentation_dataset
 from segmentron.models.model_zoo import get_segmentation_model
 from segmentron.utils.score import SegmentationMetric
-from segmentron.utils.visualize import get_color_pallete
-from segmentron.utils.logger import setup_logger
-from segmentron.utils.distributed import synchronize, get_rank, make_data_sampler, make_batch_data_sampler
-from segmentron.utils.config import cfg
-from train import parse_args
-
+from segmentron.utils.distributed import synchronize, make_data_sampler, make_batch_data_sampler
+from segmentron.config import cfg
+from segmentron.utils.options import parse_args
+from segmentron.utils.default_setup import default_setup
 
 class Evaluator(object):
     def __init__(self, args):
@@ -33,16 +30,16 @@ class Evaluator(object):
         # image transform
         input_transform = transforms.Compose([
             transforms.ToTensor(),
-            transforms.Normalize(cfg.MEAN, cfg.STD),
+            transforms.Normalize(cfg.DATASET.MEAN, cfg.DATASET.STD),
         ])
 
         # dataset and dataloader
-        val_dataset = get_segmentation_dataset(cfg.DATASET, split='val', mode='testval', transform=input_transform)
+        val_dataset = get_segmentation_dataset(cfg.DATASET.NAME, split='val', mode='testval', transform=input_transform)
         val_sampler = make_data_sampler(val_dataset, False, args.distributed)
-        val_batch_sampler = make_batch_data_sampler(val_sampler, images_per_batch=cfg.TEST_BATCH_SIZE, drop_last=False)
+        val_batch_sampler = make_batch_data_sampler(val_sampler, images_per_batch=cfg.TEST.BATCH_SIZE, drop_last=False)
         self.val_loader = data.DataLoader(dataset=val_dataset,
                                           batch_sampler=val_batch_sampler,
-                                          num_workers=cfg.WORKERS,
+                                          num_workers=cfg.DATASET.WORKERS,
                                           pin_memory=True)
 
         # create network
@@ -79,9 +76,9 @@ class Evaluator(object):
 
             with torch.no_grad():
                 size = image.size()[2:]
-                if size[0] < cfg.EVAL_CROP_SIZE[0] and size[1] < cfg.EVAL_CROP_SIZE[1]:
-                    pad_height = cfg.EVAL_CROP_SIZE[0] - size[0]
-                    pad_width = cfg.EVAL_CROP_SIZE[1] - size[1]
+                if size[0] < cfg.TEST.CROP_SIZE[0] and size[1] < cfg.TEST.CROP_SIZE[1]:
+                    pad_height = cfg.TEST.CROP_SIZE[0] - size[0]
+                    pad_width = cfg.TEST.CROP_SIZE[1] - size[1]
                     image = F.pad(image, (0, pad_height, 0, pad_width))
                     output = model(image)[0]
                     output = output[..., :size[0], :size[1]]
@@ -93,44 +90,24 @@ class Evaluator(object):
             logging.info("Sample: {:d}, validation pixAcc: {:.3f}, mIoU: {:.3f}".format(
                 i + 1, pixAcc * 100, mIoU * 100))
 
-            if self.args.save_pred:
-                pred = torch.argmax(output, 1)
-                pred = pred.cpu().data.numpy()
-
-                predict = pred.squeeze(0)
-                mask = get_color_pallete(predict, self.args.dataset)
-                mask.save(os.path.join(outdir, os.path.splitext(filename[0])[0] + '.png'))
+            # Todo
+            # if self.args.save_pred:
+            #     pred = torch.argmax(output, 1)
+            #     pred = pred.cpu().data.numpy()
+            #
+            #     predict = pred.squeeze(0)
+            #     mask = get_color_pallete(predict, self.args.dataset)
+            #     mask.save(os.path.join(outdir, os.path.splitext(filename[0])[0] + '.png'))
         synchronize()
 
 
 if __name__ == '__main__':
     args = parse_args()
     cfg.update_from_file(args.config_file)
-    cfg.PHASE = 'val'
-    cfg.check_and_infer()
-    num_gpus = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
-    args.distributed = num_gpus > 1
-    if not args.no_cuda and torch.cuda.is_available():
-        cudnn.benchmark = True
-        args.device = "cuda"
-    else:
-        args.distributed = False
-        args.device = "cpu"
-    if args.distributed:
-        torch.cuda.set_device(args.local_rank)
-        torch.distributed.init_process_group(backend="nccl", init_method="env://")
-        synchronize()
+    cfg.PHASE = 'test'
+    cfg.check_and_freeze()
 
-    # TODO: optim code (bug)
-    args.save_pred = False
-    if args.save_pred:
-        outdir = '../runs/pred_pic/{}_{}_{}'.format(args.model, args.backbone, args.dataset)
-        if not os.path.exists(outdir):
-            os.makedirs(outdir)
-
-    setup_logger("Segmentron", cfg.TRAIN.LOG_SAVE_DIR, get_rank(), filename='{}_{}_{}_{}_log.txt'.format(
-        cfg.MODEL.MODEL_NAME, cfg.MODEL.BACKBONE, cfg.DATASET, cfg.TIME_STAMP))
+    default_setup(args)
 
     evaluator = Evaluator(args)
     evaluator.eval()
-    torch.cuda.empty_cache()

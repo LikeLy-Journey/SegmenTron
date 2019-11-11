@@ -63,7 +63,7 @@ def save_colorful_images(prediction, filename, output_dir, palettes):
     im.save(fn)
 
 
-def get_color_pallete(npimg, dataset='pascal_voc'):
+def get_color_pallete(npimg, dataset='cityscape'):
     """Visualize image.
 
     Parameters
@@ -86,9 +86,9 @@ def get_color_pallete(npimg, dataset='pascal_voc'):
         out_img = Image.fromarray(npimg.astype('uint8'))
         out_img.putpalette(adepallete)
         return out_img
-    elif dataset == 'citys':
+    elif dataset == 'cityscape':
         out_img = Image.fromarray(npimg.astype('uint8'))
-        out_img.putpalette(cityspallete)
+        out_img.putpalette(cityscapepallete)
         return out_img
     out_img = Image.fromarray(npimg.astype('uint8'))
     out_img.putpalette(vocpallete)
@@ -135,7 +135,7 @@ adepallete = [
     255, 41, 255, 0, 173, 0, 255, 0, 245, 255, 71, 0, 255, 122, 0, 255, 0, 255, 184, 0, 92, 255, 184, 255, 0, 0,
     133, 255, 255, 214, 0, 25, 194, 194, 102, 255, 0, 92, 0, 255]
 
-cityspallete = [
+cityscapepallete = [
     128, 64, 128,
     244, 35, 232,
     70, 70, 70,

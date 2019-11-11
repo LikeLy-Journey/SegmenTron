@@ -10,9 +10,8 @@ Segmentation is what you need. Support deeplapv3 plus now.
 |:-:|:-:|:-:|:-:|:-:|:-:|
 |DeepLabv3_plus|xception65|cityscape(val)|(1025,2049)|78.8|[78.93](https://github.com/LikeLy-Journey/SegmenTron/releases/download/v0.1.0/deeplabv3_plus_xception_segmentron.pth)|
 |DeepLabv3_plus|resnet101|cityscape(val)|(1025,2049)|-|[78.27](https://github.com/LikeLy-Journey/SegmenTron/releases/download/v0.1.0/deeplabv3_plus_resnet101_segmentron.pth)|
-|Danet|resnet101|cityscape(val)|(1024,2048)|79.9|[79.43](https://github.com/LikeLy-Journey/SegmenTron/releases/download/v0.1.0/danet101-official.pth)<sup>[1](#trans)</sup>|
-
-<a name="trans">[1]</a> this model was converted from [DANET official repo](https://github.com/junfu1115/DANet), self-trained model will release soon.
+|Danet|resnet101|cityscape(val)|(1024,2048)|79.9|[79.34](https://github.com/LikeLy-Journey/SegmenTron/releases/download/v0.1.0/danet101_segmentron.pth)|
+|Pspnet|resnet101|cityscape(val)|(1025,2049)|78.63|[77.00](https://github.com/LikeLy-Journey/SegmenTron/releases/download/v0.1.0/pspnet_resnet101_segmentron.pth)|
 
 ## Environments
 
@@ -78,5 +77,5 @@ python -m torch.distributed.launch --nproc_per_node=$NGPUS eval.py \
 
 ## References
 - [PyTorch-Encoding](https://github.com/zhanghang1989/PyTorch-Encoding)
-- [maskrcnn-benchmark](https://github.com/facebookresearch/maskrcnn-benchmark)
+- [detectron2](https://github.com/facebookresearch/detectron2)
 - [gloun-cv](https://github.com/dmlc/gluon-cv)

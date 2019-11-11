@@ -1,4 +1,3 @@
-"""Download files with progress bar."""
 import os
 import hashlib
 import requests

@@ -1,8 +1,6 @@
-import argparse
 import time
 import datetime
 import os
-import shutil
 import sys
 
 cur_path = os.path.abspath(os.path.dirname(__file__))
@@ -10,47 +8,23 @@ root_path = os.path.split(cur_path)[0]
 sys.path.append(root_path)
 
 import logging
-import pprint
 import torch
 import torch.nn as nn
 import torch.utils.data as data
-import torch.backends.cudnn as cudnn
 import torch.nn.functional as F
 
 from torchvision import transforms
 from segmentron.data.dataloader import get_segmentation_dataset
 from segmentron.models.model_zoo import get_segmentation_model
-from segmentron.utils.loss import get_segmentation_loss
+from segmentron.solver.loss import get_segmentation_loss
+from segmentron.solver.optimizer import get_optimizer
+from segmentron.solver.lr_scheduler import get_scheduler
 from segmentron.utils.distributed import *
-from segmentron.utils.logger import setup_logger
-from segmentron.utils.optimizer import get_optimizer
-from segmentron.utils.lr_scheduler import get_scheduler
 from segmentron.utils.score import SegmentationMetric
-from segmentron.utils.config import cfg
-from segmentron.utils.env import seed_all_rng
-
-def parse_args():
-    parser = argparse.ArgumentParser(description='Segmentron')
-    parser.add_argument('config_file',
-                        help='config file path')
-    # cuda setting
-    parser.add_argument('--no-cuda', action='store_true', default=False,
-                        help='disables CUDA training')
-    parser.add_argument('--local_rank', type=int, default=0)
-    # checkpoint and log
-    parser.add_argument('--resume', type=str, default=None,
-                        help='put the path to resuming file if needed')
-    parser.add_argument('--log-iter', type=int, default=10,
-                        help='print log every log-iter')
-    # evaluation only
-    parser.add_argument('--val-epoch', type=int, default=1,
-                        help='run validation every val-epoch')
-    parser.add_argument('--skip-val', action='store_true', default=False,
-                        help='skip validation during training')
-    args = parser.parse_args()
-
-    return args
-
+from segmentron.utils.filesystem import save_checkpoint
+from segmentron.utils.options import parse_args
+from segmentron.utils.default_setup import default_setup
+from segmentron.config import cfg
 
 class Trainer(object):
     def __init__(self, args):
@@ -60,47 +34,51 @@ class Trainer(object):
         # image transform
         input_transform = transforms.Compose([
             transforms.ToTensor(),
-            transforms.Normalize(cfg.MEAN, cfg.STD),
+            transforms.Normalize(cfg.DATASET.MEAN, cfg.DATASET.STD),
         ])
         # dataset and dataloader
-        data_kwargs = {'transform': input_transform, 'base_size': cfg.TRAIN_BASE_SIZE,
-                       'crop_size': cfg.TRAIN_CROP_SIZE}
-        train_dataset = get_segmentation_dataset(cfg.DATASET, split='train', mode='train', **data_kwargs)
-        val_dataset = get_segmentation_dataset(cfg.DATASET, split='val', mode='testval', **data_kwargs)
-        self.iters_per_epoch = len(train_dataset) // (args.num_gpus * cfg.BATCH_SIZE)
-        self.max_iters = cfg.EPOCHS * self.iters_per_epoch
+        data_kwargs = {'transform': input_transform, 'base_size': cfg.TRAIN.BASE_SIZE,
+                       'crop_size': cfg.TRAIN.CROP_SIZE}
+        train_dataset = get_segmentation_dataset(cfg.DATASET.NAME, split='train', mode='train', **data_kwargs)
+        val_dataset = get_segmentation_dataset(cfg.DATASET.NAME, split='val', mode='testval', **data_kwargs)
+        self.iters_per_epoch = len(train_dataset) // (args.num_gpus * cfg.TRAIN.BATCH_SIZE)
+        self.max_iters = cfg.TRAIN.EPOCHS * self.iters_per_epoch
 
         train_sampler = make_data_sampler(train_dataset, shuffle=True, distributed=args.distributed)
-        train_batch_sampler = make_batch_data_sampler(train_sampler, cfg.BATCH_SIZE, self.max_iters, drop_last=True)
+        train_batch_sampler = make_batch_data_sampler(train_sampler, cfg.TRAIN.BATCH_SIZE, self.max_iters, drop_last=True)
         val_sampler = make_data_sampler(val_dataset, False, args.distributed)
-        val_batch_sampler = make_batch_data_sampler(val_sampler, cfg.TEST_BATCH_SIZE, drop_last=False)
+        val_batch_sampler = make_batch_data_sampler(val_sampler, cfg.TEST.BATCH_SIZE, drop_last=False)
 
         self.train_loader = data.DataLoader(dataset=train_dataset,
                                             batch_sampler=train_batch_sampler,
-                                            num_workers=cfg.WORKERS,
+                                            num_workers=cfg.DATASET.WORKERS,
                                             pin_memory=True)
         self.val_loader = data.DataLoader(dataset=val_dataset,
                                           batch_sampler=val_batch_sampler,
-                                          num_workers=cfg.WORKERS,
+                                          num_workers=cfg.DATASET.WORKERS,
                                           pin_memory=True)
 
         # create network
         self.model = get_segmentation_model().to(self.device)
-        if args.distributed and cfg.TRAIN.SYNC_BATCH_NORM:
+        if cfg.MODEL.BN_TYPE not in ['BN']:
+            logging.info('Batch norm type is {}, convert_sync_batchnorm is not effective'.format(cfg.MODEL.BN_TYPE))
+        elif args.distributed and cfg.TRAIN.SYNC_BATCH_NORM:
             self.model = nn.SyncBatchNorm.convert_sync_batchnorm(self.model)
             logging.info('SyncBatchNorm is effective!')
         else:
-            logging.info('Do not use SyncBatchNorm!')
+            logging.info('Not use SyncBatchNorm!')
 
         # create criterion
-        self.criterion = get_segmentation_loss(cfg.MODEL.MODEL_NAME, use_ohem=cfg.SOLVER.OHEM, aux=cfg.SOLVER.AUX,
-                                               aux_weight=cfg.SOLVER.AUX_WEIGHT, ignore_index=cfg.IGNORE_INDEX).to(self.device)
+        self.criterion = get_segmentation_loss(cfg.MODEL.MODEL_NAME, use_ohem=cfg.SOLVER.OHEM,
+                                               aux=cfg.SOLVER.AUX, aux_weight=cfg.SOLVER.AUX_WEIGHT,
+                                               ignore_index=cfg.DATASET.IGNORE_INDEX).to(self.device)
 
         # optimizer, for model just includes encoder, decoder(head and auxlayer).
         self.optimizer = get_optimizer(self.model)
 
         # lr scheduling
-        self.lr_scheduler = get_scheduler(self.optimizer, max_iters=self.max_iters)
+        self.lr_scheduler = get_scheduler(self.optimizer, max_iters=self.max_iters,
+                                          iters_per_epoch=self.iters_per_epoch)
 
         # resume checkpoint if needed
         self.start_epoch = 0
@@ -129,7 +107,7 @@ class Trainer(object):
 
     def train(self):
         self.save_to_disk = get_rank() == 0
-        epochs, max_iters, iters_per_epoch = cfg.EPOCHS, self.max_iters, self.iters_per_epoch
+        epochs, max_iters, iters_per_epoch = cfg.TRAIN.EPOCHS, self.max_iters, self.iters_per_epoch
         log_per_iters, val_per_iters = self.args.log_iter, self.args.val_epoch * self.iters_per_epoch
         # save_per_iters = cfg.TRAIN.SNAPSHOT_EPOCH * self.iters_per_epoch
         start_time = time.time()
@@ -198,9 +176,9 @@ class Trainer(object):
 
             with torch.no_grad():
                 size = image.size()[2:]
-                if size[0] < cfg.EVAL_CROP_SIZE[0] and size[1] < cfg.EVAL_CROP_SIZE[1]:
-                    pad_height = cfg.EVAL_CROP_SIZE[0] - size[0]
-                    pad_width = cfg.EVAL_CROP_SIZE[1] - size[1]
+                if size[0] < cfg.TEST.CROP_SIZE[0] and size[1] < cfg.TEST.CROP_SIZE[1]:
+                    pad_height = cfg.TEST.CROP_SIZE[0] - size[0]
+                    pad_width = cfg.TEST.CROP_SIZE[1] - size[1]
                     image = F.pad(image, (0, pad_height, 0, pad_width))
                     output = model(image)[0]
                     output = output[..., :size[0], :size[1]]
@@ -218,73 +196,17 @@ class Trainer(object):
             save_checkpoint(model, epoch, is_best=True)
 
 
-def save_checkpoint(model, epoch, optimizer=None, lr_scheduler=None, is_best=False):
-    """Save Checkpoint"""
-    directory = os.path.expanduser(cfg.TRAIN.MODEL_SAVE_DIR)
-    directory = os.path.join(directory, '{}_{}_{}_{}'.format(cfg.MODEL.MODEL_NAME, cfg.MODEL.BACKBONE,
-                                                             cfg.DATASET, cfg.TIME_STAMP))
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-    filename = '{}.pth'.format(str(epoch))
-    filename = os.path.join(directory, filename)
-    model_state_dict = model.module.state_dict() if hasattr(model, 'module') else model.state_dict()
-    if is_best:
-        best_filename = 'best_model.pth'
-        best_filename = os.path.join(directory, best_filename)
-        torch.save(model_state_dict, best_filename)
-    else:
-        save_state = {
-            'epoch': epoch,
-            'state_dict': model_state_dict,
-            'optimizer': optimizer.state_dict(),
-            'lr_scheduler': lr_scheduler.state_dict()
-        }
-        if not os.path.exists(filename):
-            torch.save(save_state, filename)
-            logging.info('Epoch {} model saved in: {}'.format(epoch, filename))
-
-        # remove last epoch
-        pre_filename = '{}.pth'.format(str(epoch - 1))
-        pre_filename = os.path.join(directory, pre_filename)
-        try:
-            if os.path.exists(pre_filename):
-                os.remove(pre_filename)
-        except OSError as e:
-            logging.info(e)
-
-
 if __name__ == '__main__':
     args = parse_args()
-    cfg.update_from_file(args.config_file)
+    # get config
     cfg.PHASE = 'train'
-    cfg.check_and_infer()
-    # if args.opts is not None:
-    #     cfg.update_from_list(args.opts)
+    cfg.update_from_file(args.config_file)
+    cfg.update_from_list(args.opts)
+    cfg.check_and_freeze()
 
-    seed_all_rng(None if cfg.SEED < 0 else cfg.SEED + get_rank())
-    num_gpus = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
-    args.num_gpus = num_gpus
-    args.distributed = num_gpus > 1
+    # setup python train environment, logger, seed..
+    default_setup(args)
 
-    if not args.no_cuda and torch.cuda.is_available():
-        # cudnn.deterministic = True
-        cudnn.benchmark = True
-        args.device = "cuda"
-    else:
-        args.distributed = False
-        args.device = "cpu"
-    if args.distributed:
-        torch.cuda.set_device(args.local_rank)
-        torch.distributed.init_process_group(backend="nccl", init_method="env://")
-        synchronize()
-
-    setup_logger("Segmentron", cfg.TRAIN.LOG_SAVE_DIR, get_rank(), filename='{}_{}_{}_{}_log.txt'.format(
-        cfg.MODEL.MODEL_NAME, cfg.MODEL.BACKBONE, cfg.DATASET, cfg.TIME_STAMP))
-    logging.info("Using {} GPUs".format(num_gpus))
-    logging.info(args)
-    logging.info(pprint.pformat(cfg))
-
-    seed_all_rng(None if cfg.SEED < 0 else cfg.SEED + get_rank())
+    # create a trainer and start train
     trainer = Trainer(args)
     trainer.train()
-    torch.cuda.empty_cache()

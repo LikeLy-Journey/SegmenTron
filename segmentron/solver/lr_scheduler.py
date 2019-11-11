@@ -1,43 +1,13 @@
-"""Popular Learning Rate Schedulers"""
-# this code heavily reference: maskrcnn_benchmark and detectron2
+# this code heavily reference: detectron2
 from __future__ import division
 import math
 import torch
 
 from typing import List
 from bisect import bisect_right
-from .config import cfg
+from segmentron.config import cfg
 
-__all__ = ['WarmupCosineLR', 'WarmupMultiStepLR', 'WarmupPolyLR']
-
-
-class WarmupMultiStepLR(torch.optim.lr_scheduler._LRScheduler):
-    def __init__(self, optimizer, milestones, gamma=0.1, warmup_factor=1.0 / 3,
-                 warmup_iters=500, warmup_method="linear", last_epoch=-1):
-        super(WarmupMultiStepLR, self).__init__(optimizer, last_epoch)
-        if not list(milestones) == sorted(milestones):
-            raise ValueError(
-                "Milestones should be a list of" " increasing integers. Got {}", milestones)
-        if warmup_method not in ("constant", "linear"):
-            raise ValueError(
-                "Only 'constant' or 'linear' warmup_method accepted got {}".format(warmup_method))
-
-        self.milestones = milestones
-        self.gamma = gamma
-        self.warmup_factor = warmup_factor
-        self.warmup_iters = warmup_iters
-        self.warmup_method = warmup_method
-
-    def get_lr(self):
-        warmup_factor = 1
-        if self.last_epoch < self.warmup_iters:
-            if self.warmup_method == 'constant':
-                warmup_factor = self.warmup_factor
-            elif self.warmup_factor == 'linear':
-                alpha = float(self.last_epoch) / self.warmup_iters
-                warmup_factor = self.warmup_factor * (1 - alpha) + alpha
-        return [base_lr * warmup_factor * self.gamma ** bisect_right(self.milestones, self.last_epoch)
-                for base_lr in self.base_lrs]
+__all__ = ['get_scheduler']
 
 
 class WarmupPolyLR(torch.optim.lr_scheduler._LRScheduler):
@@ -71,6 +41,43 @@ class WarmupPolyLR(torch.optim.lr_scheduler._LRScheduler):
             return [self.target_lr + (base_lr - self.target_lr) * warmup_factor for base_lr in self.base_lrs]
         factor = pow(1 - T / N, self.power)
         return [self.target_lr + (base_lr - self.target_lr) * factor for base_lr in self.base_lrs]
+
+
+class WarmupMultiStepLR(torch.optim.lr_scheduler._LRScheduler):
+    def __init__(
+        self,
+        optimizer: torch.optim.Optimizer,
+        milestones: List[int],
+        gamma: float = 0.1,
+        warmup_factor: float = 0.001,
+        warmup_iters: int = 1000,
+        warmup_method: str = "linear",
+        last_epoch: int = -1,
+    ):
+        if not list(milestones) == sorted(milestones):
+            raise ValueError(
+                "Milestones should be a list of" " increasing integers. Got {}", milestones
+            )
+        self.milestones = milestones
+        self.gamma = gamma
+        self.warmup_factor = warmup_factor
+        self.warmup_iters = warmup_iters
+        self.warmup_method = warmup_method
+        super().__init__(optimizer, last_epoch)
+
+    def get_lr(self) -> List[float]:
+        warmup_factor = _get_warmup_factor_at_iter(
+            self.warmup_method, self.last_epoch, self.warmup_iters, self.warmup_factor
+        )
+        return [
+            base_lr * warmup_factor * self.gamma ** bisect_right(self.milestones, self.last_epoch)
+            for base_lr in self.base_lrs
+        ]
+
+    def _compute_values(self) -> List[float]:
+        # The new interface
+        return self.get_lr()
+
 
 class WarmupCosineLR(torch.optim.lr_scheduler._LRScheduler):
     def __init__(
@@ -139,18 +146,21 @@ def _get_warmup_factor_at_iter(
         raise ValueError("Unknown warmup method: {}".format(method))
 
 
-def get_scheduler(optimizer, max_iters):
+def get_scheduler(optimizer, max_iters, iters_per_epoch):
     mode = cfg.SOLVER.LR_SCHEDULER.lower()
+    warm_up_iters = iters_per_epoch * cfg.SOLVER.WARMUP.EPOCHS
     if mode == 'poly':
-        return WarmupPolyLR(optimizer, max_iters=max_iters, power=cfg.SOLVER.POWER,
-                            warmup_factor=cfg.SOLVER.WARMUP_FACTOR, warmup_iters=cfg.SOLVER.WARMUP_ITERS,
-                            warmup_method=cfg.SOLVER.WARMUP_METHOD)
+        return WarmupPolyLR(optimizer, max_iters=max_iters, power=cfg.SOLVER.POLY.POWER,
+                            warmup_factor=cfg.SOLVER.WARMUP.FACTOR, warmup_iters=warm_up_iters,
+                            warmup_method=cfg.SOLVER.WARMUP.METHOD)
     elif mode == 'cosine':
-        return WarmupCosineLR(optimizer, max_iters=max_iters, warmup_factor=cfg.SOLVER.WARMUP_FACTOR,
-                              warmup_iters=cfg.SOLVER.WARMUP_ITERS, warmup_method=cfg.SOLVER.WARMUP_METHOD)
+        return WarmupCosineLR(optimizer, max_iters=max_iters, warmup_factor=cfg.SOLVER.WARMUP.FACTOR,
+                              warmup_iters=warm_up_iters, warmup_method=cfg.SOLVER.WARMUP.METHOD)
     elif mode == 'step':
-        return WarmupMultiStepLR(optimizer, cfg.SOLVER.DECAY_EPOCH, warmup_factor=cfg.SOLVER.WARMUP_FACTOR,
-                              warmup_iters=cfg.SOLVER.WARMUP_ITERS, warmup_method=cfg.SOLVER.WARMUP_METHOD)
+        milestones = [x * iters_per_epoch for x in cfg.SOLVER.STEP.DECAY_EPOCH]
+        return WarmupMultiStepLR(optimizer, milestones=milestones, gamma=cfg.SOLVER.STEP.GAMMA,
+                                 warmup_factor=cfg.SOLVER.WARMUP.FACTOR, warmup_iters=warm_up_iters,
+                                 warmup_method=cfg.SOLVER.WARMUP.METHOD)
     else:
         raise ValueError("not support lr scheduler method!")
 
