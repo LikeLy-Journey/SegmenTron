@@ -1,0 +1,77 @@
+DATASET:
+    NAME: "cityscape"
+    MEAN: [0.485, 0.456, 0.406]
+    STD: [0.229, 0.224, 0.225]
+
+TRAIN:
+    EPOCHS: 484
+    CROP_SIZE: (512, 1024)
+    BATCH_SIZE: 3
+    BACKBONE_PRETRAINED_PATH: /workspace/pretrained_models/hrnet_w18_small_model_v1.pth
+
+TEST:
+    BATCH_SIZE: 4
+    CROP_SIZE: (1024, 2048)
+    TEST_MODEL_PATH: ../trained_models/hrnet_w18_small_v1_cityscapes_cls19_1024x2048_trainset_segmentron.pth
+
+SOLVER:
+    LR: 0.01
+    WEIGHT_DECAY: 5e-4
+    DECODER_LR_FACTOR: 1.0
+
+MODEL:
+    MODEL_NAME: "hrnet"
+    BACKBONE: "hrnet"
+    BN_TYPE: 'BN'
+    BN_MOMENTUM: 0.01
+    HRNET:
+        FINAL_CONV_KERNEL: 1
+        STAGE1:
+            NUM_MODULES: 1
+            NUM_BRANCHES: 1
+            BLOCK: BOTTLENECK
+            NUM_BLOCKS:
+                - 1
+            NUM_CHANNELS:
+                - 32
+            FUSE_METHOD: SUM
+        STAGE2:
+            NUM_MODULES: 1
+            NUM_BRANCHES: 2
+            BLOCK: BASIC
+            NUM_BLOCKS:
+                - 2
+                - 2
+            NUM_CHANNELS:
+                - 16
+                - 32
+            FUSE_METHOD: SUM
+        STAGE3:
+            NUM_MODULES: 1
+            NUM_BRANCHES: 3
+            BLOCK: BASIC
+            NUM_BLOCKS:
+                - 2
+                - 2
+                - 2
+            NUM_CHANNELS:
+                - 16
+                - 32
+                - 64
+            FUSE_METHOD: SUM
+        STAGE4:
+            NUM_MODULES: 1
+            NUM_BRANCHES: 4
+            BLOCK: BASIC
+            NUM_BLOCKS:
+                - 2
+                - 2
+                - 2
+                - 2
+            NUM_CHANNELS:
+                - 16
+                - 32
+                - 64
+                - 128
+            FUSE_METHOD: SUM
+

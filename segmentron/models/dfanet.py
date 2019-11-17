@@ -35,9 +35,9 @@ class DFANet(SegBaseModel):
         self.fca_3_reduce = _ConvBNReLU(192, 32, 1, **kwargs)
         self.conv_out = nn.Conv2d(32, nclass, 1)
 
-        self.__setattr__('decoder', ['enc2_2', 'enc3_2', 'enc4_2', 'fca_2', 'enc2_3', 'enc3_3', 'enc3_4', 'fca_3',
-                                       'enc2_1_reduce', 'enc2_2_reduce', 'enc2_3_reduce', 'conv_fusion', 'fca_1_reduce',
-                                       'fca_2_reduce', 'fca_3_reduce', 'conv_out'])
+        self.__setattr__('decoder', ['enc2_2', 'enc3_2', 'enc4_2', 'fca_2', 'enc2_3', 'enc3_3', 'enc3_4',
+                                     'fca_3', 'enc2_1_reduce', 'enc2_2_reduce', 'enc2_3_reduce', 'conv_fusion',
+                                     'fca_1_reduce', 'fca_2_reduce', 'fca_3_reduce', 'conv_out'])
 
     def forward(self, x):
         # backbone

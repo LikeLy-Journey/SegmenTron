@@ -1,6 +1,7 @@
 """Base segmentation dataset"""
 import random
 import numpy as np
+import torchvision
 
 from PIL import Image, ImageOps, ImageFilter
 from ...config import cfg
@@ -19,6 +20,7 @@ class SegmentationDataset(object):
         self.mode = mode if mode is not None else split
         self.base_size = base_size
         self.crop_size = self.to_tuple(crop_size)
+        self.color_jitter = self._get_color_jitter()
 
     def to_tuple(self, size):
         if isinstance(size, (list, tuple)):
@@ -27,6 +29,19 @@ class SegmentationDataset(object):
             return tuple((size, size))
         else:
             raise ValueError('Unsupport datatype: {}'.format(type(size)))
+
+    def _get_color_jitter(self):
+        color_jitter = cfg.AUG.COLOR_JITTER
+        if color_jitter is None:
+            return None
+        if isinstance(color_jitter, (list, tuple)):
+            # color jitter should be a 3-tuple/list if spec brightness/contrast/saturation
+            # or 4 if also augmenting hue
+            assert len(color_jitter) in (3, 4)
+        else:
+            # if it's a scalar, duplicate for brightness, contrast, and saturation, no hue
+            color_jitter = (float(color_jitter),) * 3
+        return torchvision.transforms.ColorJitter(*color_jitter)
 
     def _val_sync_transform(self, img, mask):
         outsize = self.crop_size
@@ -46,6 +61,7 @@ class SegmentationDataset(object):
         y1 = int(round((h - outsize[0]) / 2.))
         img = img.crop((x1, y1, x1 + outsize[1], y1 + outsize[0]))
         mask = mask.crop((x1, y1, x1 + outsize[1], y1 + outsize[0]))
+
         # final transform
         img, mask = self._img_transform(img), self._mask_transform(mask)
         return img, mask
@@ -83,6 +99,9 @@ class SegmentationDataset(object):
         if cfg.AUG.BLUR_PROB > 0 and random.random() < cfg.AUG.BLUR_PROB:
             radius = cfg.AUG.BLUR_RADIUS if cfg.AUG.BLUR_RADIUS > 0 else random.random()
             img = img.filter(ImageFilter.GaussianBlur(radius=radius))
+        # color jitter
+        if self.color_jitter:
+            img = self.color_jitter(img)
         # final transform
         img, mask = self._img_transform(img), self._mask_transform(mask)
         return img, mask

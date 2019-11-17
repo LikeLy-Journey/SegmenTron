@@ -21,6 +21,10 @@ class FastSCNN(nn.Module):
                                                                norm_layer=self.norm_layer)
         self.feature_fusion = FeatureFusionModule(64, 128, 128, norm_layer=self.norm_layer)
         self.classifier = Classifer(128, num_classes, norm_layer=self.norm_layer)
+
+        decoder_list = ['learning_to_downsample', 'global_feature_extractor',
+                        'feature_fusion', 'classifier']
+
         if self.aux:
             self.auxlayer = nn.Sequential(
                 nn.Conv2d(64, 32, 3, padding=1, bias=False),
@@ -29,6 +33,9 @@ class FastSCNN(nn.Module):
                 nn.Dropout(0.1),
                 nn.Conv2d(32, num_classes, 1)
             )
+            decoder_list += ['auxlayer']
+
+        self.__setattr__('decoder', decoder_list)
 
     def forward(self, x):
         size = x.size()[2:]
