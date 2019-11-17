@@ -1,6 +1,4 @@
 """
-This file contains primitives for multi-gpu communication.
-This is useful when doing distributed training.
 code is heavily based on https://github.com/facebookresearch/maskrcnn-benchmark
 """
 import math
@@ -251,7 +249,3 @@ class IterationBasedBatchSampler(BatchSampler):
 
     def __len__(self):
         return self.num_iterations
-
-
-if __name__ == '__main__':
-    pass

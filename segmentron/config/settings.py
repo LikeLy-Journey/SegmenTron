@@ -29,7 +29,8 @@ cfg.AUG.MIRROR = True
 cfg.AUG.BLUR_PROB = 0.0
 # blur radius
 cfg.AUG.BLUR_RADIUS = 0.0
-
+# color jitter, float or tuple: (0.1, 0.2, 0.3, 0.4)
+cfg.AUG.COLOR_JITTER = None
 ########################### train config ##########################################
 # epochs
 cfg.TRAIN.EPOCHS = 30

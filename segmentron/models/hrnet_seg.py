@@ -18,7 +18,6 @@ from .segbase import SegBaseModel
 from ..config import cfg
 
 
-
 class _HRNetHead(nn.Module):
     def __init__(self, nclass, last_inp_channels, norm_layer=nn.BatchNorm2d):
         super(_HRNetHead, self).__init__()
@@ -44,9 +43,9 @@ class _HRNetHead(nn.Module):
     def forward(self, x):
         # Upsampling
         x0_h, x0_w = x[0].size(2), x[0].size(3)
-        x1 = F.interpolate(x[1], size=(x0_h, x0_w), mode='bilinear')
-        x2 = F.interpolate(x[2], size=(x0_h, x0_w), mode='bilinear')
-        x3 = F.interpolate(x[3], size=(x0_h, x0_w), mode='bilinear')
+        x1 = F.interpolate(x[1], size=(x0_h, x0_w), mode='bilinear', align_corners=False)
+        x2 = F.interpolate(x[2], size=(x0_h, x0_w), mode='bilinear', align_corners=False)
+        x3 = F.interpolate(x[3], size=(x0_h, x0_w), mode='bilinear', align_corners=False)
 
         x = torch.cat([x[0], x1, x2, x3], 1)
         x = self.last_layer(x)
@@ -55,14 +54,14 @@ class _HRNetHead(nn.Module):
 class HighResolutionNet(SegBaseModel):
     def __init__(self, nclass):
         super(HighResolutionNet, self).__init__(nclass)
-
         self.hrnet_head = _HRNetHead(nclass, self.encoder.last_inp_channels)
+        self.__setattr__('decoder', ['hrnet_head'])
 
     def forward(self, x):
         shape = x.shape[2:]
         x = self.encoder(x)
         x = self.hrnet_head(x)
-        x = F.interpolate(x, size=shape, mode='bilinear')
+        x = F.interpolate(x, size=shape, mode='bilinear', align_corners=False)
         return [x]
 
 

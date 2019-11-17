@@ -1,7 +1,6 @@
-# PyTorch for Semantic Segmentation
 ## Introduce
-This repository contains some models for semantic segmentation and the pipeline of training and testing models, 
-implemented in PyTorch.
+
+Segmentation is what you need. Support deeplapv3 plus now.
 
 ![](./demo.png)
 
@@ -13,6 +12,17 @@ implemented in PyTorch.
 |DeepLabv3_plus|resnet101|cityscape(val)|(1025,2049)|-|[78.27](https://github.com/LikeLy-Journey/SegmenTron/releases/download/v0.1.0/deeplabv3_plus_resnet101_segmentron.pth)|
 |Danet|resnet101|cityscape(val)|(1024,2048)|79.9|[79.34](https://github.com/LikeLy-Journey/SegmenTron/releases/download/v0.1.0/danet101_segmentron.pth)|
 |Pspnet|resnet101|cityscape(val)|(1025,2049)|78.63|[77.00](https://github.com/LikeLy-Journey/SegmenTron/releases/download/v0.1.0/pspnet_resnet101_segmentron.pth)|
+
+### real-time models
+Model|Backbone|Datasets|eval size|Mean IoU(paper)|Mean IoU(this repo)|FPS|
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+|ICnet|resnet50(0.5)|cityscape(val)|(1024,2048)|67.8|-|41.39|
+|DeepLabv3_plus|mobilenetV2|cityscape(val)|(1024,2048)|70.5|-|46.64|
+|DFANet|xceptionA|cityscape(val)|(1024,2048)|70.3|-|21.46|
+|HRNet|w18_small_v1|cityscape(val)|(1024,2048)|70.3|[70.5](https://github.com/LikeLy-Journey/SegmenTron/releases/download/v0.1.0/hrnet_w18_small_v1_segmentron.pth)|66.01|
+|Fast_SCNN|-|cityscape(val)|(1024,2048)|68.3|[67.3](https://github.com/LikeLy-Journey/SegmenTron/releases/download/v0.1.0/fast_scnn_segmentron.pth)|145.77|
+
+FPS was tested on V100.
 
 ## Environments
 
