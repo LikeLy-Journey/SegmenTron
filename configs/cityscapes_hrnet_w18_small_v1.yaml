@@ -12,7 +12,7 @@ TRAIN:
 TEST:
     BATCH_SIZE: 4
     CROP_SIZE: (1024, 2048)
-    TEST_MODEL_PATH: ../trained_models/hrnet_w18_small_v1_cityscapes_cls19_1024x2048_trainset_segmentron.pth
+    TEST_MODEL_PATH: ../trained_models/hrnet_w18_small_v1_segmentron.pth
 
 SOLVER:
     LR: 0.01

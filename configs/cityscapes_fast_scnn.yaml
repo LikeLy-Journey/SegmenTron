@@ -5,10 +5,11 @@ DATASET:
 TRAIN:
     EPOCHS: 1000
     BATCH_SIZE: 3
-    CROP_SIZE: 768
+    CROP_SIZE: (512, 1024)
 TEST:
     BATCH_SIZE: 4
     CROP_SIZE: (1024, 2048)
+    TEST_MODEL_PATH: ../trained_models/fast_scnn_segmentron.pth
 
 SOLVER:
     LR: 0.045
