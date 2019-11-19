@@ -3,7 +3,7 @@
 This repository contains some models for semantic segmentation and the pipeline of training and testing models, 
 implemented in PyTorch.
 
-![](https://github.com/LikeLy-Journey/SegmenTron/releases/download/v0.1.0/demo.png)
+![](./demo.png)
 
 ## Model zoo
 
