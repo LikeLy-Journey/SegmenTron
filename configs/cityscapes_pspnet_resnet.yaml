@@ -20,6 +20,6 @@ AUG:
     BLUR_PROB: 0.5
 
 MODEL:
-    MODEL_NAME: "pspnet"
+    MODEL_NAME: "PSPNet"
     BACKBONE: "resnet101"
     OUTPUT_STRIDE: 8

@@ -1,9 +1,4 @@
 # this code is heavily based on https://github.com/HRNet
-# ------------------------------------------------------------------------------
-# Copyright (c) Microsoft
-# Licensed under the MIT License.
-# Written by Ke Sun (sunk@mail.ustc.edu.cn)
-# ------------------------------------------------------------------------------
 
 from __future__ import absolute_import
 from __future__ import division
@@ -15,7 +10,23 @@ import torch._utils
 import torch.nn.functional as F
 
 from .segbase import SegBaseModel
+from .model_zoo import MODEL_REGISTRY
 from ..config import cfg
+
+
+@MODEL_REGISTRY.register(name='HRNet')
+class HighResolutionNet(SegBaseModel):
+    def __init__(self):
+        super(HighResolutionNet, self).__init__()
+        self.hrnet_head = _HRNetHead(self.nclass, self.encoder.last_inp_channels)
+        self.__setattr__('decoder', ['hrnet_head'])
+
+    def forward(self, x):
+        shape = x.shape[2:]
+        x = self.encoder(x)
+        x = self.hrnet_head(x)
+        x = F.interpolate(x, size=shape, mode='bilinear', align_corners=False)
+        return [x]
 
 
 class _HRNetHead(nn.Module):
@@ -29,7 +40,7 @@ class _HRNetHead(nn.Module):
                 kernel_size=1,
                 stride=1,
                 padding=0),
-            #norm_layer(last_inp_channels, momentum=BN_MOMENTUM),
+
             norm_layer(last_inp_channels),
             nn.ReLU(inplace=False),
             nn.Conv2d(
@@ -50,23 +61,3 @@ class _HRNetHead(nn.Module):
         x = torch.cat([x[0], x1, x2, x3], 1)
         x = self.last_layer(x)
         return x
-
-class HighResolutionNet(SegBaseModel):
-    def __init__(self, nclass):
-        super(HighResolutionNet, self).__init__(nclass)
-        self.hrnet_head = _HRNetHead(nclass, self.encoder.last_inp_channels)
-        self.__setattr__('decoder', ['hrnet_head'])
-
-    def forward(self, x):
-        shape = x.shape[2:]
-        x = self.encoder(x)
-        x = self.hrnet_head(x)
-        x = F.interpolate(x, size=shape, mode='bilinear', align_corners=False)
-        return [x]
-
-
-def get_hrnet():
-    from ..data.dataloader import datasets
-    model = HighResolutionNet(datasets[cfg.DATASET.NAME].NUM_CLASS)
-
-    return model

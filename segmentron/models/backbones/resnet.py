@@ -1,12 +1,9 @@
-import os
-import logging
-import torch
 import torch.nn as nn
-from .utils import load_backbone_pretrained
 
+from .build import BACKBONE_REGISTRY
 from ...config import cfg
 
-__all__ = ['ResNetV1', 'get_resnet']
+__all__ = ['ResNetV1']
 
 
 class BasicBlockV1b(nn.Module):
@@ -200,16 +197,51 @@ class ResNetV1(nn.Module):
 
         return c1, c2, c3, c4
 
-def get_resnet(backbone, norm_layer=nn.BatchNorm2d):
-    resnet_blocks = {
-        'resnet18': [2, 2, 2, 2],
-        'resnet34': [3, 4, 6, 3],
-        'resnet50': [3, 4, 6, 3],
-        'resnet101': [3, 4, 23, 3],
-        'resnet152': [3, 8, 36, 3],
-    }
-    deep_stem = cfg.MODEL.RESNET_VARIANT == 'c'
-    model = ResNetV1(BottleneckV1b, resnet_blocks[backbone], deep_stem=deep_stem, norm_layer=norm_layer)
-    load_backbone_pretrained(model, backbone + cfg.MODEL.RESNET_VARIANT)
-    return model
+
+@BACKBONE_REGISTRY.register()
+def resnet18(norm_layer=nn.BatchNorm2d):
+    num_block = [2, 2, 2, 2]
+    return ResNetV1(BasicBlockV1b, num_block, norm_layer=norm_layer)
+
+
+@BACKBONE_REGISTRY.register()
+def resnet34(norm_layer=nn.BatchNorm2d):
+    num_block = [3, 4, 6, 3]
+    return ResNetV1(BasicBlockV1b, num_block, norm_layer=norm_layer)
+
+
+@BACKBONE_REGISTRY.register()
+def resnet50(norm_layer=nn.BatchNorm2d):
+    num_block = [3, 4, 6, 3]
+    return ResNetV1(BottleneckV1b, num_block, norm_layer=norm_layer)
+
+
+@BACKBONE_REGISTRY.register()
+def resnet101(norm_layer=nn.BatchNorm2d):
+    num_block = [3, 4, 23, 3]
+    return ResNetV1(BottleneckV1b, num_block, norm_layer=norm_layer)
+
+
+@BACKBONE_REGISTRY.register()
+def resnet152(norm_layer=nn.BatchNorm2d):
+    num_block = [3, 8, 36, 3]
+    return ResNetV1(BottleneckV1b, num_block, norm_layer=norm_layer)
+
+
+@BACKBONE_REGISTRY.register()
+def resnet50c(norm_layer=nn.BatchNorm2d):
+    num_block = [3, 4, 6, 3]
+    return ResNetV1(BottleneckV1b, num_block, norm_layer=norm_layer, deep_stem=True)
+
+
+@BACKBONE_REGISTRY.register()
+def resnet101c(norm_layer=nn.BatchNorm2d):
+    num_block = [3, 4, 23, 3]
+    return ResNetV1(BottleneckV1b, num_block, norm_layer=norm_layer, deep_stem=True)
+
+
+@BACKBONE_REGISTRY.register()
+def resnet152c(norm_layer=nn.BatchNorm2d):
+    num_block = [3, 8, 36, 3]
+    return ResNetV1(BottleneckV1b, num_block, norm_layer=norm_layer, deep_stem=True)
 

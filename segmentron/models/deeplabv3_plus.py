@@ -3,31 +3,28 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .segbase import SegBaseModel
+from .model_zoo import MODEL_REGISTRY
 from ..modules import _ConvBNReLU, SeparableConv2d, _ASPP, _FCNHead
-from ..config import cfg
-__all__ = ['DeepLabV3Plus', 'get_deeplabv3_plus', 'get_deeplabv3_plus_xception_voc']
+
+__all__ = ['DeepLabV3Plus']
 
 
+@MODEL_REGISTRY.register(name='DeepLabV3_Plus')
 class DeepLabV3Plus(SegBaseModel):
     r"""DeepLabV3Plus
-    Parameters
-    ----------
-    nclass : int
-        Number of categories for the training dataset.
-
     """
 
-    def __init__(self, nclass):
-        super(DeepLabV3Plus, self).__init__(nclass)
+    def __init__(self):
+        super(DeepLabV3Plus, self).__init__()
         if self.backbone.startswith('mobilenet'):
             c1_channels = 24
             c4_channels = 320
         else:
             c1_channels = 256
             c4_channels = 2048
-        self.head = _DeepLabHead(nclass, c1_channels=c1_channels, c4_channels=c4_channels)
+        self.head = _DeepLabHead(self.nclass, c1_channels=c1_channels, c4_channels=c4_channels)
         if self.aux:
-            self.auxlayer = _FCNHead(728, nclass)
+            self.auxlayer = _FCNHead(728, self.nclass)
         self.__setattr__('decoder', ['head', 'auxlayer'] if self.aux else ['head'])
 
     def forward(self, x):
@@ -62,17 +59,3 @@ class _DeepLabHead(nn.Module):
         x = self.aspp(x)
         x = F.interpolate(x, size, mode='bilinear', align_corners=True)
         return self.block(torch.cat([x, c1], dim=1))
-
-
-def get_deeplabv3_plus():
-    from ..data.dataloader import datasets
-    model = DeepLabV3Plus(datasets[cfg.DATASET.NAME].NUM_CLASS)
-    return model
-
-
-def get_deeplabv3_plus_xception_voc(**kwargs):
-    return get_deeplabv3_plus('pascal_voc', 'xception', **kwargs)
-
-
-if __name__ == '__main__':
-    model = get_deeplabv3_plus_xception_voc()

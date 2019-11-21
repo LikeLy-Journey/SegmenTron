@@ -15,6 +15,6 @@ SOLVER:
     LR: 0.02
 
 MODEL:
-    MODEL_NAME: "dfanet"
-    BACKBONE: "xceptionA"
+    MODEL_NAME: "DFANet"
+    BACKBONE: "xception_a"
 

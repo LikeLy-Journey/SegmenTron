@@ -75,14 +75,17 @@ class SegmentronConfig(dict):
                     raise KeyError('Non-existent config key: {}'.format(key))
 
     def remove_irrelevant_cfg(self):
-        model_name = self.MODEL.MODEL_NAME.upper()
+        model_name = self.MODEL.MODEL_NAME
 
-        from ..models.model_zoo import get_model_list
-        model_list = get_model_list()
-        assert model_name.lower() in model_list, "{} is not support now! support models are {}".format(model_name, model_list)
+        from ..models.model_zoo import MODEL_REGISTRY
+        model_list = MODEL_REGISTRY.get_list()
+        model_list_lower = [x.lower() for x in model_list]
+        # print('model_list:', model_list)
+        assert model_name.lower() in model_list_lower, "Expected model name in {}, but received {}"\
+            .format(model_list, model_name)
         pop_keys = []
         for key in self.MODEL.keys():
-            if key.lower() in model_list and key != model_name:
+            if key.lower() in model_list_lower and key.lower() != model_name.lower():
                 pop_keys.append(key)
         for key in pop_keys:
             self.MODEL.pop(key)

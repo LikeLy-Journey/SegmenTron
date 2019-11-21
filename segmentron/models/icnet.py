@@ -4,24 +4,26 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .segbase import SegBaseModel
+from .model_zoo import MODEL_REGISTRY
 from ..modules.basic import _ConvBNReLU
 from ..config import cfg
 
-__all__ = ['ICNet', 'get_icnet']
+__all__ = ['ICNet']
 
 
+@MODEL_REGISTRY.register()
 class ICNet(SegBaseModel):
     """Image Cascade Network"""
 
-    def __init__(self, nclass):
-        super(ICNet, self).__init__(nclass)
+    def __init__(self):
+        super(ICNet, self).__init__()
         self.conv_sub1 = nn.Sequential(
             _ConvBNReLU(3, 32, 3, 2),
             _ConvBNReLU(32, 32, 3, 2),
             _ConvBNReLU(32, 64, 3, 2)
         )
 
-        self.head = _ICHead(nclass)
+        self.head = _ICHead(self.nclass)
         self.__setattr__('decoder', ['conv_sub1', 'head'])
 
     def forward(self, x):
@@ -91,10 +93,3 @@ class CascadeFeatureFusion(nn.Module):
         x_low_cls = self.conv_low_cls(x_low)
 
         return x, x_low_cls
-
-
-def get_icnet():
-    from ..data.dataloader import datasets
-    model = ICNet(datasets[cfg.DATASET.NAME].NUM_CLASS)
-    return model
-

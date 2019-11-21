@@ -1,13 +1,10 @@
-import os
-import logging
-import torch
 import torch.nn as nn
 
 from ...modules import SeparableConv2d
-from ...config import cfg
-from .utils import load_backbone_pretrained
+from .build import BACKBONE_REGISTRY
 
-__all__ = ['Xception65', 'get_xception', 'Enc', 'FCAttention']
+
+__all__ = ['Xception65', 'Enc', 'FCAttention']
 
 
 class XceptionBlock(nn.Module):
@@ -52,6 +49,8 @@ class XceptionBlock(nn.Module):
         else:
             return outputs
 
+
+@BACKBONE_REGISTRY.register()
 class Xception65(nn.Module):
     def __init__(self, output_stride=16, norm_layer=nn.BatchNorm2d):
         super().__init__()
@@ -271,15 +270,14 @@ class XceptionA(nn.Module):
         return x
 
 
-# Constructor
-def get_xception(backbone, norm_layer=nn.BatchNorm2d):
-    if backbone.upper().endswith('A'):
-        model = XceptionA(norm_layer=norm_layer)
-    elif backbone.upper().endswith('65'):
-        model = Xception65(cfg.MODEL.OUTPUT_STRIDE, norm_layer=norm_layer)
-    else:
-        raise RuntimeError('unspport xception version.')
-    load_backbone_pretrained(model, backbone)
+@BACKBONE_REGISTRY.register()
+def xception_a(norm_layer=nn.BatchNorm2d):
+    model = XceptionA(norm_layer=norm_layer)
     return model
 
+
+@BACKBONE_REGISTRY.register()
+def xception65(norm_layer=nn.BatchNorm2d):
+    model = Xception65(norm_layer=norm_layer)
+    return model
 

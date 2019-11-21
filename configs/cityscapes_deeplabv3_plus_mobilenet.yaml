@@ -15,7 +15,7 @@ SOLVER:
     LR: 0.02
 
 MODEL:
-    MODEL_NAME: "deeplabv3_plus"
-    BACKBONE: "mobilenetv2"
+    MODEL_NAME: "DeepLabV3_Plus"
+    BACKBONE: "mobilenet_v2"
     OUTPUT_STRIDE: 32
 

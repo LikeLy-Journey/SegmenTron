@@ -1,10 +1,8 @@
 """Base Model for Semantic Segmentation"""
 import torch.nn as nn
 
-from .backbones.resnet import get_resnet
-from .backbones.xception import get_xception
-from .backbones.mobilenet import get_mobilenet
-from .backbones.hrnet import get_hrnet
+from .backbones import get_segmentation_backbone
+from ..data.dataloader import datasets
 from ..modules import get_norm
 from ..config import cfg
 __all__ = ['SegBaseModel']
@@ -13,25 +11,19 @@ __all__ = ['SegBaseModel']
 class SegBaseModel(nn.Module):
     r"""Base Model for Semantic Segmentation
     """
-    def __init__(self, nclass):
+    def __init__(self, need_backbone=True):
         super(SegBaseModel, self).__init__()
-        self.nclass = nclass
+        self.nclass = datasets[cfg.DATASET.NAME].NUM_CLASS
         self.aux = cfg.SOLVER.AUX
         self.norm_layer = get_norm(cfg.MODEL.BN_TYPE)
-        self.get_backbone()
+        self.backbone = None
+        self.encoder = None
+        if need_backbone:
+            self.get_backbone()
 
     def get_backbone(self):
         self.backbone = cfg.MODEL.BACKBONE.lower()
-        if self.backbone.startswith('xception'):
-            self.encoder = get_xception(self.backbone, self.norm_layer)
-        elif self.backbone.startswith('resnet'):
-            self.encoder = get_resnet(self.backbone, self.norm_layer)
-        elif self.backbone.startswith('mobilenet'):
-            self.encoder = get_mobilenet(self.backbone, self.norm_layer)
-        elif self.backbone.startswith('hrnet'):
-            self.encoder = get_hrnet(self.backbone, self.norm_layer)
-        else:
-            raise RuntimeError('unknown backbone: {}'.format(self.backbone))
+        self.encoder = get_segmentation_backbone(self.backbone, self.norm_layer)
 
     def base_forward(self, x):
         """forwarding backbone network"""

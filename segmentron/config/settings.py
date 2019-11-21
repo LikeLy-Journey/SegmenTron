@@ -111,7 +111,7 @@ cfg.MODEL.BACKBONE = ''
 # model backbone channel scale
 cfg.MODEL.BACKBONE_SCALE = 1.0
 # support resnet b, c. b is standard resnet in pytorch official repo
-cfg.MODEL.RESNET_VARIANT = 'b'
+# cfg.MODEL.RESNET_VARIANT = 'b'
 # multi branch loss weight
 cfg.MODEL.MULTI_LOSS_WEIGHT = [1.0]
 # gn groups
