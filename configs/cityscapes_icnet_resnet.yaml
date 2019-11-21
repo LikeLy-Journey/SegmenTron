@@ -10,13 +10,12 @@ TRAIN:
 TEST:
     BATCH_SIZE: 4
     CROP_SIZE: (1024, 2048)
-#    TEST_MODEL_PATH: ../trained_models/icnet_plus_resnet101_segmentron.pth
 
 SOLVER:
     LR: 0.01
 
 MODEL:
-    MODEL_NAME: "icnet"
+    MODEL_NAME: "ICNet"
     BACKBONE: "resnet50"
     OUTPUT_STRIDE: 8
     BACKBONE_SCALE: 0.5

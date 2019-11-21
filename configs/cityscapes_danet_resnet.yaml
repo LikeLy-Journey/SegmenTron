@@ -15,7 +15,7 @@ SOLVER:
     LR: 0.003
 
 MODEL:
-    MODEL_NAME: "danet"
+    MODEL_NAME: "DANet"
     BACKBONE: "resnet101"
     OUTPUT_STRIDE: 8
     DANET:

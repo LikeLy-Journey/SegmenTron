@@ -3,18 +3,19 @@ from __future__ import division
 import torch.nn.functional as F
 
 from .segbase import SegBaseModel
+from .model_zoo import MODEL_REGISTRY
 from ..modules import _FCNHead
-from ..config import cfg
 
-__all__ = ['FCN', 'get_fcn']
+__all__ = ['FCN']
 
 
+@MODEL_REGISTRY.register()
 class FCN(SegBaseModel):
-    def __init__(self, nclass):
-        super(FCN, self).__init__(nclass)
-        self.head = _FCNHead(2048, nclass)
+    def __init__(self):
+        super(FCN, self).__init__()
+        self.head = _FCNHead(2048, self.nclass)
         if self.aux:
-            self.auxlayer = _FCNHead(1024, nclass)
+            self.auxlayer = _FCNHead(1024, self.nclass)
 
         self.__setattr__('decoder', ['head', 'auxlayer'] if self.aux else ['head'])
 
@@ -31,11 +32,3 @@ class FCN(SegBaseModel):
             auxout = F.interpolate(auxout, size, mode='bilinear', align_corners=True)
             outputs.append(auxout)
         return tuple(outputs)
-
-
-def get_fcn():
-    from ..data.dataloader import datasets
-    model = FCN(datasets[cfg.DATASET.NAME].NUM_CLASS)
-    return model
-
-

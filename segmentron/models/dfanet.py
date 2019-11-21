@@ -4,16 +4,17 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .segbase import SegBaseModel
-from segmentron.modules import _ConvBNReLU
 from .backbones.xception import Enc, FCAttention
-from ..config import cfg
-__all__ = ['DFANet', 'get_dfanet']
+from .model_zoo import MODEL_REGISTRY
+from ..modules import _ConvBNReLU
+
+__all__ = ['DFANet']
 
 
+@MODEL_REGISTRY.register()
 class DFANet(SegBaseModel):
-    def __init__(self, nclass, **kwargs):
-        super(DFANet, self).__init__(nclass)
-        # self.pretrained = get_xception_a(pretrained_base, **kwargs)
+    def __init__(self, **kwargs):
+        super(DFANet, self).__init__()
 
         self.enc2_2 = Enc(240, 48, 4, **kwargs)
         self.enc3_2 = Enc(144, 96, 6, **kwargs)
@@ -33,7 +34,7 @@ class DFANet(SegBaseModel):
         self.fca_1_reduce = _ConvBNReLU(192, 32, 1, **kwargs)
         self.fca_2_reduce = _ConvBNReLU(192, 32, 1, **kwargs)
         self.fca_3_reduce = _ConvBNReLU(192, 32, 1, **kwargs)
-        self.conv_out = nn.Conv2d(32, nclass, 1)
+        self.conv_out = nn.Conv2d(32, self.nclass, 1)
 
         self.__setattr__('decoder', ['enc2_2', 'enc3_2', 'enc4_2', 'fca_2', 'enc2_3', 'enc3_3', 'enc3_4',
                                      'fca_3', 'enc2_1_reduce', 'enc2_2_reduce', 'enc2_3_reduce', 'conv_fusion',
@@ -83,10 +84,3 @@ class DFANet(SegBaseModel):
         outputs.append(out)
 
         return tuple(outputs)
-
-
-def get_dfanet():
-    from ..data.dataloader import datasets
-    model = DFANet(datasets[cfg.DATASET.NAME].NUM_CLASS)
-    return model
-

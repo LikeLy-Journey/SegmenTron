@@ -4,29 +4,25 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .segbase import SegBaseModel
+from .model_zoo import MODEL_REGISTRY
 from ..modules import _FCNHead, PyramidPooling
-from ..config import cfg
-__all__ = ['PSPNet', 'get_psp']
+
+__all__ = ['PSPNet']
 
 
+@MODEL_REGISTRY.register()
 class PSPNet(SegBaseModel):
     r"""Pyramid Scene Parsing Network
-
-    Parameters
-    ----------
-    nclass : int
-        Number of categories for the training dataset.
-
     Reference:
         Zhao, Hengshuang, Jianping Shi, Xiaojuan Qi, Xiaogang Wang, and Jiaya Jia.
         "Pyramid scene parsing network." *CVPR*, 2017
     """
 
-    def __init__(self, nclass):
-        super(PSPNet, self).__init__(nclass)
-        self.head = _PSPHead(nclass)
+    def __init__(self):
+        super(PSPNet, self).__init__()
+        self.head = _PSPHead(self.nclass)
         if self.aux:
-            self.auxlayer = _FCNHead(1024, nclass)
+            self.auxlayer = _FCNHead(1024, self.nclass)
 
         self.__setattr__('decoder', ['head', 'auxlayer'] if self.aux else ['head'])
 
@@ -60,10 +56,4 @@ class _PSPHead(nn.Module):
     def forward(self, x):
         x = self.psp(x)
         return self.block(x)
-
-
-def get_psp():
-    from ..data.dataloader import datasets
-    model = PSPNet(datasets[cfg.DATASET.NAME].NUM_CLASS)
-    return model
 

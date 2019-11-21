@@ -1,10 +1,11 @@
 """MobileNet and MobileNetV2."""
 import torch.nn as nn
 
-from segmentron.modules import _ConvBNReLU, _DepthwiseConv, InvertedResidual
-from segmentron.config import cfg
+from .build import BACKBONE_REGISTRY
+from ...modules import _ConvBNReLU, _DepthwiseConv, InvertedResidual
+from ...config import cfg
 
-__all__ = ['MobileNet', 'MobileNetV2', 'get_mobilenet']
+__all__ = ['MobileNet', 'MobileNetV2']
 
 
 class MobileNet(nn.Module):
@@ -140,14 +141,12 @@ class MobileNetV2(nn.Module):
         return c1, c2, c3, c4
 
 
-# Constructor
-def get_mobilenet(backbone, norm_layer=nn.BatchNorm2d):
-    if backbone.upper().endswith('V1'):
-        model = MobileNet(norm_layer=norm_layer)
-    elif backbone.upper().endswith('V2'):
-        model = MobileNetV2(norm_layer=norm_layer)
-    else:
-        raise ValueError("Not support mobileNet version")
-    return model
+@BACKBONE_REGISTRY.register()
+def mobilenet_v1(norm_layer=nn.BatchNorm2d):
+    return MobileNet(norm_layer=norm_layer)
 
+
+@BACKBONE_REGISTRY.register()
+def mobilenet_v2(norm_layer=nn.BatchNorm2d):
+    return MobileNetV2(norm_layer=norm_layer)
 

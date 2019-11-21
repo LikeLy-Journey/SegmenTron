@@ -1,4 +1,4 @@
-# this code heavily reference: detectron2
+# this code heavily based on detectron2
 import logging
 import torch
 import torch.distributed as dist

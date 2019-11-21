@@ -15,5 +15,5 @@ SOLVER:
     LR: 0.02
 
 MODEL:
-    MODEL_NAME: "fcn"
+    MODEL_NAME: "FCN"
     BACKBONE: "resnet101"

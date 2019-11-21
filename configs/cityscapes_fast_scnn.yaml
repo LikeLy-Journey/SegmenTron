@@ -9,7 +9,7 @@ TRAIN:
 TEST:
     BATCH_SIZE: 4
     CROP_SIZE: (1024, 2048)
-    TEST_MODEL_PATH: ../trained_models/fast_scnn_segmentron.pth
+    TEST_MODEL_PATH: ../runs/checkpoints/fast_scnn__cityscape_2019-11-19-02-02/best_model.pth
 
 SOLVER:
     LR: 0.045
@@ -22,4 +22,5 @@ AUG:
     COLOR_JITTER: 0.4
 
 MODEL:
-    MODEL_NAME: "fast_scnn"
+    MODEL_NAME: "FastSCNN"
+    BN_MOMENTUM: 0.01

@@ -1,2 +1,5 @@
-from .xception import get_xception
-from .resnet import get_resnet
+from .build import BACKBONE_REGISTRY, get_segmentation_backbone
+from .xception import *
+from .mobilenet import *
+from .resnet import *
+from .hrnet import *

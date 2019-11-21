@@ -7,7 +7,6 @@ TRAIN:
     EPOCHS: 484
     CROP_SIZE: (512, 1024)
     BATCH_SIZE: 3
-    BACKBONE_PRETRAINED_PATH: /workspace/pretrained_models/hrnet_w18_small_model_v1.pth
 
 TEST:
     BATCH_SIZE: 4
@@ -20,8 +19,8 @@ SOLVER:
     DECODER_LR_FACTOR: 1.0
 
 MODEL:
-    MODEL_NAME: "hrnet"
-    BACKBONE: "hrnet"
+    MODEL_NAME: "HRNet"
+    BACKBONE: "hrnet_w18_small_v1"
     BN_TYPE: 'BN'
     BN_MOMENTUM: 0.01
     HRNET:

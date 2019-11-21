@@ -4,23 +4,26 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from .model_zoo import MODEL_REGISTRY
+from .segbase import SegBaseModel
 from ..modules.basic import SeparableConv2d, _ConvBNReLU, InvertedResidual
 from ..modules import PyramidPooling, get_norm
 from ..config import cfg
 
-__all__ = ['FastSCNN', 'get_fast_scnn']
+__all__ = ['FastSCNN']
 
 
-class FastSCNN(nn.Module):
-    def __init__(self, num_classes):
-        super(FastSCNN, self).__init__()
+@MODEL_REGISTRY.register()
+class FastSCNN(SegBaseModel):
+    def __init__(self):
+        super(FastSCNN, self).__init__(need_backbone=False)
         self.aux = cfg.SOLVER.AUX
         self.norm_layer = get_norm(cfg.MODEL.BN_TYPE)
         self.learning_to_downsample = LearningToDownsample(32, 48, 64, norm_layer=self.norm_layer)
         self.global_feature_extractor = GlobalFeatureExtractor(64, [64, 96, 128], 128, 6, [3, 3, 3],
                                                                norm_layer=self.norm_layer)
         self.feature_fusion = FeatureFusionModule(64, 128, 128, norm_layer=self.norm_layer)
-        self.classifier = Classifer(128, num_classes, norm_layer=self.norm_layer)
+        self.classifier = Classifer(128, self.nclass, norm_layer=self.norm_layer)
 
         decoder_list = ['learning_to_downsample', 'global_feature_extractor',
                         'feature_fusion', 'classifier']
@@ -31,7 +34,7 @@ class FastSCNN(nn.Module):
                 self.norm_layer(32),
                 nn.ReLU(True),
                 nn.Dropout(0.1),
-                nn.Conv2d(32, num_classes, 1)
+                nn.Conv2d(32, self.nclass, 1)
             )
             decoder_list += ['auxlayer']
 
@@ -146,9 +149,3 @@ class Classifer(nn.Module):
         x = self.dsconv2(x)
         x = self.conv(x)
         return x
-
-
-def get_fast_scnn():
-    from ..data.dataloader import datasets
-    model = FastSCNN(datasets[cfg.DATASET.NAME].NUM_CLASS)
-    return model

@@ -1,35 +1,29 @@
-import torch
 import logging
+import torch
 
-from .deeplabv3_plus import get_deeplabv3_plus
-from .danet import get_danet
-from .icnet import get_icnet
-from .pspnet import get_psp
-from .dfanet import get_dfanet
-from .fast_scnn import get_fast_scnn
-from .fcn import get_fcn
-from .hrnet_seg import get_hrnet
+from segmentron.utils.registry import Registry
 from ..config import cfg
 
-__all__ = ['get_model_list', 'get_segmentation_model']
+MODEL_REGISTRY = Registry("MODEL")
+MODEL_REGISTRY.__doc__ = """
+Registry for segment model, i.e. the whole model.
 
-_models = {
-        'deeplabv3_plus': get_deeplabv3_plus,
-        'danet': get_danet,
-        'pspnet': get_psp,
-        'icnet': get_icnet,
-        'dfanet': get_dfanet,
-        'fast_scnn': get_fast_scnn,
-        'fcn': get_fcn,
-        'hrnet': get_hrnet,
-    }
-
-def get_model_list():
-    return list(_models.keys())
+The registered object will be called with `obj()`
+and expected to return a `nn.Module` object.
+"""
 
 
 def get_segmentation_model():
-    model = _models[cfg.MODEL.MODEL_NAME]()
+    """
+    Built the whole model, defined by `cfg.MODEL.META_ARCHITECTURE`.
+    """
+    model_name = cfg.MODEL.MODEL_NAME
+    model = MODEL_REGISTRY.get(model_name)()
+    load_model_pretrain(model)
+    return model
+
+
+def load_model_pretrain(model):
     if cfg.PHASE == 'train':
         if cfg.TRAIN.PRETRAINED_MODEL_PATH:
             logging.info('load pretrained model from {}'.format(cfg.TRAIN.PRETRAINED_MODEL_PATH))
@@ -40,4 +34,3 @@ def get_segmentation_model():
             logging.info('load test model from {}'.format(cfg.TEST.TEST_MODEL_PATH))
             msg = model.load_state_dict(torch.load(cfg.TEST.TEST_MODEL_PATH))
             logging.info(msg)
-    return model
