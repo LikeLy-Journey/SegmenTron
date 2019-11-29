@@ -1,5 +1,6 @@
 """Pascal ADE20K Semantic Segmentation Dataset."""
 import os
+import logging
 import torch
 import numpy as np
 
@@ -37,15 +38,15 @@ class ADE20KSegmentation(SegmentationDataset):
     BASE_DIR = 'ADEChallengeData2016'
     NUM_CLASS = 150
 
-    def __init__(self, root='../datasets/ade', split='test', mode=None, transform=None, **kwargs):
+    def __init__(self, root='datasets/ade', split='test', mode=None, transform=None, **kwargs):
         super(ADE20KSegmentation, self).__init__(root, split, mode, transform, **kwargs)
-        root = os.path.join(root, self.BASE_DIR)
-        assert os.path.exists(root), "Please put the data in ../datasets/ade"
+        root = os.path.join(self.root, self.BASE_DIR)
+        assert os.path.exists(root), "Please put the data in {SEG_ROOT}/datasets/ade"
         self.images, self.masks = _get_ade20k_pairs(root, split)
         assert (len(self.images) == len(self.masks))
         if len(self.images) == 0:
             raise RuntimeError("Found 0 images in subfolders of:" + root + "\n")
-        print('Found {} images in the folder {}'.format(len(self.images), root))
+        logging.info('Found {} images in the folder {}'.format(len(self.images), root))
 
     def __getitem__(self, index):
         img = Image.open(self.images[index]).convert('RGB')
@@ -163,7 +164,7 @@ def _get_ade20k_pairs(folder, mode='train'):
                 img_paths.append(imgpath)
                 mask_paths.append(maskpath)
             else:
-                print('cannot find the mask:', maskpath)
+                logging.info('cannot find the mask:', maskpath)
 
     return img_paths, mask_paths
 

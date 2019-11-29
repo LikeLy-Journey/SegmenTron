@@ -38,10 +38,10 @@ class CitySegmentation(SegmentationDataset):
     BASE_DIR = 'cityscapes'
     NUM_CLASS = 19
 
-    def __init__(self, root='../datasets/cityscapes', split='train', mode=None, transform=None, **kwargs):
+    def __init__(self, root='datasets/cityscapes', split='train', mode=None, transform=None, **kwargs):
         super(CitySegmentation, self).__init__(root, split, mode, transform, **kwargs)
         # self.root = os.path.join(root, self.BASE_DIR)
-        assert os.path.exists(self.root), "Please put dataset in ../datasets/cityscapes"
+        assert os.path.exists(self.root), "Please put dataset in {SEG_ROOT}/datasets/cityscapes"
         self.images, self.mask_paths = _get_city_pairs(self.root, self.split)
         assert (len(self.images) == len(self.mask_paths))
         if len(self.images) == 0:
