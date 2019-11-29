@@ -4,12 +4,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from torch.autograd import Variable
+from ..data.dataloader import datasets
+from ..config import cfg
 
-__all__ = ['MixSoftmaxCrossEntropyLoss', 'MixSoftmaxCrossEntropyOHEMLoss',
-           'ICNetLoss', 'get_segmentation_loss']
+__all__ = ['get_segmentation_loss']
 
 
-# TODO: optim function
 class MixSoftmaxCrossEntropyLoss(nn.CrossEntropyLoss):
     def __init__(self, aux=True, aux_weight=0.2, ignore_index=-1, **kwargs):
         super(MixSoftmaxCrossEntropyLoss, self).__init__(ignore_index=ignore_index)
@@ -43,7 +43,6 @@ class MixSoftmaxCrossEntropyLoss(nn.CrossEntropyLoss):
             return dict(loss=super(MixSoftmaxCrossEntropyLoss, self).forward(*inputs))
 
 
-# TODO: optim function
 class ICNetLoss(nn.CrossEntropyLoss):
     """Cross Entropy Loss for ICNet"""
     def __init__(self, aux_weight=0.4, ignore_index=-1, **kwargs):
@@ -112,6 +111,56 @@ class OhemCrossEntropy2d(nn.Module):
         return self.criterion(pred, target)
 
 
+class EncNetLoss(nn.CrossEntropyLoss):
+    """2D Cross Entropy Loss with SE Loss"""
+
+    def __init__(self, aux=False, aux_weight=0.4, weight=None, ignore_index=-1, **kwargs):
+        super(EncNetLoss, self).__init__(weight, None, ignore_index)
+        self.se_loss = cfg.MODEL.ENCNET.SE_LOSS
+        self.se_weight = cfg.MODEL.ENCNET.SE_WEIGHT
+        self.nclass = datasets[cfg.DATASET.NAME].NUM_CLASS
+        self.aux = aux
+        self.aux_weight = aux_weight
+        self.bceloss = nn.BCELoss(weight)
+
+    def forward(self, *inputs):
+        preds, target = tuple(inputs)
+        inputs = tuple(list(preds) + [target])
+        if not self.se_loss and not self.aux:
+            return super(EncNetLoss, self).forward(*inputs)
+        elif not self.se_loss:
+            pred1, pred2, target = tuple(inputs)
+            loss1 = super(EncNetLoss, self).forward(pred1, target)
+            loss2 = super(EncNetLoss, self).forward(pred2, target)
+            return dict(loss=loss1 + self.aux_weight * loss2)
+        elif not self.aux:
+            pred, se_pred, target = tuple(inputs)
+            se_target = self._get_batch_label_vector(target, nclass=self.nclass).type_as(pred)
+            loss1 = super(EncNetLoss, self).forward(pred, target)
+            loss2 = self.bceloss(torch.sigmoid(se_pred), se_target)
+            return dict(loss=loss1 + self.se_weight * loss2)
+        else:
+            pred1, se_pred, pred2, target = tuple(inputs)
+            se_target = self._get_batch_label_vector(target, nclass=self.nclass).type_as(pred1)
+            loss1 = super(EncNetLoss, self).forward(pred1, target)
+            loss2 = super(EncNetLoss, self).forward(pred2, target)
+            loss3 = self.bceloss(torch.sigmoid(se_pred), se_target)
+            return dict(loss=loss1 + self.aux_weight * loss2 + self.se_weight * loss3)
+
+    @staticmethod
+    def _get_batch_label_vector(target, nclass):
+        # target is a 3D Variable BxHxW, output is 2D BxnClass
+        batch = target.size(0)
+        tvect = Variable(torch.zeros(batch, nclass))
+        for i in range(batch):
+            hist = torch.histc(target[i].cpu().data.float(),
+                               bins=nclass, min=0,
+                               max=nclass - 1)
+            vect = hist > 0
+            tvect[i] = vect
+        return tvect
+
+
 class MixSoftmaxCrossEntropyOHEMLoss(OhemCrossEntropy2d):
     def __init__(self, aux=False, aux_weight=0.4, weight=None, ignore_index=-1, **kwargs):
         super(MixSoftmaxCrossEntropyOHEMLoss, self).__init__(ignore_index=ignore_index)
@@ -144,5 +193,7 @@ def get_segmentation_loss(model, use_ohem=False, **kwargs):
     model = model.lower()
     if model == 'icnet':
         return ICNetLoss(**kwargs)
+    elif model == 'encnet':
+        return EncNetLoss(**kwargs)
     else:
         return MixSoftmaxCrossEntropyLoss(**kwargs)
