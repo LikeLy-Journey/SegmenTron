@@ -13,7 +13,7 @@ def _set_batch_norm_attr(named_modules, attr, value):
 
 def _get_paramters(model):
     params_list = list()
-    if hasattr(model, 'encoder') and hasattr(model, 'decoder'):
+    if hasattr(model, 'encoder') and model.encoder is not None and hasattr(model, 'decoder'):
         params_list.append({'params': model.encoder.parameters(), 'lr': cfg.SOLVER.LR})
         if cfg.MODEL.BN_EPS_FOR_ENCODER:
             logging.info('Set bn custom eps for bn in encoder: {}'.format(cfg.MODEL.BN_EPS_FOR_ENCODER))
@@ -60,7 +60,7 @@ def get_optimizer(model):
             parameters, lr=cfg.SOLVER.LR, alpha=0.9, eps=cfg.SOLVER.EPSILON,
             momentum=cfg.SOLVER.MOMENTUM, weight_decay=cfg.SOLVER.WEIGHT_DECAY)
     else:
-        assert False and "Invalid optimizer"
-        raise ValueError("not support optimizer method!")
+        raise ValueError("Expected optimizer method in [sgd, adam, adadelta, rmsprop], but received "
+                         "{}".format(opt_lower))
 
     return optimizer

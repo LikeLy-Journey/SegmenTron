@@ -33,11 +33,14 @@ class DANet(SegBaseModel):
         x[1] = F.interpolate(x[1], imsize, mode='bilinear', align_corners=True)
         x[2] = F.interpolate(x[2], imsize, mode='bilinear', align_corners=True)
 
-        outputs = list(x[0])
+        outputs = list()
+        outputs.append(x[0])
         outputs.append(x[1])
         outputs.append(x[2])
+
         return tuple(outputs)
-        
+
+
 class DANetHead(nn.Module):
     def __init__(self, in_channels, out_channels, norm_layer=nn.BatchNorm2d):
         super(DANetHead, self).__init__()

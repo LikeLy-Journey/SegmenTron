@@ -19,7 +19,7 @@ def parse_args():
     parser.add_argument('--skip-val', action='store_true', default=False,
                         help='skip validation during training')
     # for visual
-    parser.add_argument('--input-img', type=str, default='../demo_vis.png',
+    parser.add_argument('--input-img', type=str, default='tools/demo_vis.png',
                         help='path to the input image or a directory of images')
     # config options
     parser.add_argument('opts', help='See config for all options',

@@ -7,6 +7,8 @@ cfg = SegmentronConfig()
 cfg.SEED = 1024
 # train time stamp, auto generate, do not need to set
 cfg.TIME_STAMP = ''
+# root path
+cfg.ROOT_PATH = ''
 # model phase ['train', 'test']
 cfg.PHASE = 'train'
 
@@ -21,7 +23,8 @@ cfg.DATASET.STD = [0.5, 0.5, 0.5]
 cfg.DATASET.IGNORE_INDEX = -1
 # workers
 cfg.DATASET.WORKERS = 4
-
+# val dataset mode
+cfg.DATASET.MODE = 'testval'
 ########################### data augment ######################################
 # data augment image mirror
 cfg.AUG.MIRROR = True
@@ -41,9 +44,9 @@ cfg.TRAIN.CROP_SIZE = 769
 # train base size
 cfg.TRAIN.BASE_SIZE = 1024
 # model output dir
-cfg.TRAIN.MODEL_SAVE_DIR = '../runs/checkpoints/'
+cfg.TRAIN.MODEL_SAVE_DIR = 'runs/checkpoints/'
 # log dir
-cfg.TRAIN.LOG_SAVE_DIR = '../runs/logs/'
+cfg.TRAIN.LOG_SAVE_DIR = 'runs/logs/'
 # pretrained model for eval or finetune
 cfg.TRAIN.PRETRAINED_MODEL_PATH = ''
 # use pretrained backbone model over imagenet
@@ -97,7 +100,7 @@ cfg.TEST.TEST_MODEL_PATH = ''
 # test batch size
 cfg.TEST.BATCH_SIZE = 1
 # eval crop size
-cfg.TEST.CROP_SIZE = tuple()
+cfg.TEST.CROP_SIZE = None
 
 ########################## visual config ###########################################
 # visual result output dir
@@ -149,11 +152,22 @@ cfg.MODEL.DEEPLABV3_PLUS.DECODER_USE_SEP_CONV = True
 # upsample mode
 # cfg.MODEL.UNET.UPSAMPLE_MODE = 'bilinear'
 
-########################## ICNET config ######################################
+########################## OCNet config ######################################
+# ['base', 'pyramid', 'asp']
+cfg.MODEL.OCNet.OC_ARCH = 'base'
+
+########################## EncNet config ######################################
+cfg.MODEL.ENCNET.SE_LOSS = True
+cfg.MODEL.ENCNET.SE_WEIGHT = 0.2
+cfg.MODEL.ENCNET.LATERAL = True
 
 
-########################## PSPNET config ######################################
+########################## CCNET config ######################################
+cfg.MODEL.CCNET.RECURRENCE = 2
 
+########################## CGNET config ######################################
+cfg.MODEL.CGNET.STAGE2_BLOCK_NUM = 3
+cfg.MODEL.CGNET.STAGE3_BLOCK_NUM = 21
 
 ########################## hrnet config ######################################
 cfg.MODEL.HRNET.PRETRAINED_LAYERS = ['*']
