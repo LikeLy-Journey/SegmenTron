@@ -9,7 +9,7 @@ TRAIN:
 TEST:
     BATCH_SIZE: 4
     CROP_SIZE: (1025, 2049)
-    TEST_MODEL_PATH: ../trained_models/deeplabv3_plus_resnet101_segmentron.pth
+#    TEST_MODEL_PATH: trained_models/deeplabv3_plus_resnet101_segmentron.pth
 
 SOLVER:
     LR: 0.02

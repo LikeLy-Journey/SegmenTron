@@ -8,8 +8,6 @@ TRAIN:
     CROP_SIZE: (512, 1024)
 TEST:
     BATCH_SIZE: 4
-    CROP_SIZE: (1024, 2048)
-    TEST_MODEL_PATH: ../runs/checkpoints/fast_scnn__cityscape_2019-11-19-02-02/best_model.pth
 
 SOLVER:
     LR: 0.045

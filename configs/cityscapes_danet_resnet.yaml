@@ -4,12 +4,11 @@ DATASET:
     STD: [0.229, 0.224, 0.225]
 TRAIN:
     EPOCHS: 240
-    BATCH_SIZE: 4
+    BATCH_SIZE: 2
     CROP_SIZE: 768
 TEST:
     BATCH_SIZE: 1
-    CROP_SIZE: (1024, 2048)
-    TEST_MODEL_PATH: ../trained_models/danet101_segmentron.pth
+#    TEST_MODEL_PATH: trained_models/danet101_segmentron.pth
 
 SOLVER:
     LR: 0.003
