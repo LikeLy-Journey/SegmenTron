@@ -19,6 +19,7 @@ def demo():
     args = parse_args()
     cfg.update_from_file(args.config_file)
     cfg.PHASE = 'test'
+    cfg.ROOT_PATH = root_path
     cfg.check_and_freeze()
     default_setup(args)
 

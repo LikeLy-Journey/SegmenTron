@@ -106,7 +106,7 @@ class _ConvBN(nn.Module):
 
 
 class _BNPReLU(nn.Module):
-    def __init__(self, out_channels, norm_layer=nn.BatchNorm2d, **kwargs):
+    def __init__(self, out_channels, norm_layer=nn.BatchNorm2d):
         super(_BNPReLU, self).__init__()
         self.bn = norm_layer(out_channels)
         self.prelu = nn.PReLU(out_channels)

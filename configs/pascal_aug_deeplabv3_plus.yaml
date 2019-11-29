@@ -1,0 +1,21 @@
+DATASET:
+    NAME: "pascal_aug"
+    MEAN: [0.5, 0.5, 0.5]
+    STD: [0.5, 0.5, 0.5]
+    MODE: 'val'
+TRAIN:
+    EPOCHS: 50
+    BATCH_SIZE: 8
+    CROP_SIZE: 480
+    BASE_SIZE: 520
+#    PRETRAINED_MODEL_PATH: ./runs/checkpoints/DeepLabV3_Plus_xception65_coco_2019-11-25-13-09/best_model.pth
+TEST:
+    BATCH_SIZE: 8
+
+SOLVER:
+    LR: 0.001
+
+MODEL:
+    MODEL_NAME: "DeepLabV3_Plus"
+    BACKBONE: "xception65"
+    BN_EPS_FOR_ENCODER: 1e-3

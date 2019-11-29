@@ -1,4 +1,5 @@
 """Base segmentation dataset"""
+import os
 import random
 import numpy as np
 import torchvision
@@ -14,7 +15,7 @@ class SegmentationDataset(object):
 
     def __init__(self, root, split, mode, transform, base_size=520, crop_size=480):
         super(SegmentationDataset, self).__init__()
-        self.root = root
+        self.root = os.path.join(cfg.ROOT_PATH, root)
         self.transform = transform
         self.split = split
         self.mode = mode if mode is not None else split

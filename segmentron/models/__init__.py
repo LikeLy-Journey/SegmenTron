@@ -8,3 +8,12 @@ from .dfanet import DFANet
 from .pspnet import PSPNet
 from .icnet import ICNet
 from .danet import DANet
+from .ccnet import CCNet
+from .bisenet import BiSeNet
+from .cgnet import CGNet
+from .denseaspp import DenseASPP
+from .dunet import DUNet
+from .encnet import EncNet
+from .lednet import LEDNet
+from .ocnet import OCNet
+from .hardnet import HardNet

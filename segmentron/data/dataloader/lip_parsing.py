@@ -13,7 +13,7 @@ class LIPSegmentation(SegmentationDataset):
     BASE_DIR = 'LIP'
     NUM_CLASS = 20
 
-    def __init__(self, root='../datasets/LIP', split='train', mode=None, transform=None, **kwargs):
+    def __init__(self, root='datasets/LIP', split='train', mode=None, transform=None, **kwargs):
         super(LIPSegmentation, self).__init__(root, split, mode, transform, **kwargs)
         _trainval_image_dir = os.path.join(root, 'TrainVal_images')
         _testing_image_dir = os.path.join(root, 'Testing_images')

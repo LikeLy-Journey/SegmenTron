@@ -27,6 +27,7 @@ class MobileNet(nn.Module):
                 stride = s if i == 0 else 1
                 features.append(_DepthwiseConv(input_channels, out_channels, stride, norm_layer))
                 input_channels = out_channels
+        self.last_inp_channels = int(1024 * multiplier)
         features.append(nn.AdaptiveAvgPool2d(1))
         self.features = nn.Sequential(*features)
 
@@ -90,7 +91,7 @@ class MobileNetV2(nn.Module):
                                        dilations[0], norm_layer=norm_layer)
         self.block5 = self._make_layer(InvertedResidual, self.planes, inverted_residual_setting[5:],
                                        dilations[1], norm_layer=norm_layer)
-
+        self.last_inp_channels = self.planes
         # building last several layers
         # features = list()
         # features.append(_ConvBNReLU(input_channels, last_channels, 1, relu6=True, norm_layer=norm_layer))

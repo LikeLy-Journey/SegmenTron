@@ -40,7 +40,7 @@ class Trainer(object):
         data_kwargs = {'transform': input_transform, 'base_size': cfg.TRAIN.BASE_SIZE,
                        'crop_size': cfg.TRAIN.CROP_SIZE}
         train_dataset = get_segmentation_dataset(cfg.DATASET.NAME, split='train', mode='train', **data_kwargs)
-        val_dataset = get_segmentation_dataset(cfg.DATASET.NAME, split='val', mode='testval', **data_kwargs)
+        val_dataset = get_segmentation_dataset(cfg.DATASET.NAME, split='val', mode=cfg.DATASET.MODE, **data_kwargs)
         self.iters_per_epoch = len(train_dataset) // (args.num_gpus * cfg.TRAIN.BATCH_SIZE)
         self.max_iters = cfg.TRAIN.EPOCHS * self.iters_per_epoch
 
@@ -175,15 +175,16 @@ class Trainer(object):
             target = target.to(self.device)
 
             with torch.no_grad():
-                size = image.size()[2:]
-                if size[0] < cfg.TEST.CROP_SIZE[0] and size[1] < cfg.TEST.CROP_SIZE[1]:
+                if cfg.DATASET.MODE == 'val' or cfg.TEST.CROP_SIZE is None:
+                    output = model(image)[0]
+                else:
+                    size = image.size()[2:]
                     pad_height = cfg.TEST.CROP_SIZE[0] - size[0]
                     pad_width = cfg.TEST.CROP_SIZE[1] - size[1]
                     image = F.pad(image, (0, pad_height, 0, pad_width))
                     output = model(image)[0]
                     output = output[..., :size[0], :size[1]]
-                else:
-                    output = model(image)[0]
+
             self.metric.update(output, target)
             pixAcc, mIoU = self.metric.get()
             logging.info("[EVAL] Sample: {:d}, pixAcc: {:.3f}, mIoU: {:.3f}".format(i + 1, pixAcc * 100, mIoU * 100))
@@ -199,9 +200,10 @@ class Trainer(object):
 if __name__ == '__main__':
     args = parse_args()
     # get config
-    cfg.PHASE = 'train'
     cfg.update_from_file(args.config_file)
     cfg.update_from_list(args.opts)
+    cfg.PHASE = 'train'
+    cfg.ROOT_PATH = root_path
     cfg.check_and_freeze()
 
     # setup python train environment, logger, seed..

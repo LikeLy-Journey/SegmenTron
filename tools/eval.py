@@ -22,6 +22,7 @@ from segmentron.config import cfg
 from segmentron.utils.options import parse_args
 from segmentron.utils.default_setup import default_setup
 
+
 class Evaluator(object):
     def __init__(self, args):
         self.args = args
@@ -75,15 +76,15 @@ class Evaluator(object):
             target = target.to(self.device)
 
             with torch.no_grad():
-                size = image.size()[2:]
-                if size[0] < cfg.TEST.CROP_SIZE[0] and size[1] < cfg.TEST.CROP_SIZE[1]:
+                if cfg.DATASET.MODE == 'val' or cfg.TEST.CROP_SIZE is None:
+                    output = model(image)[0]
+                else:
+                    size = image.size()[2:]
                     pad_height = cfg.TEST.CROP_SIZE[0] - size[0]
                     pad_width = cfg.TEST.CROP_SIZE[1] - size[1]
                     image = F.pad(image, (0, pad_height, 0, pad_width))
                     output = model(image)[0]
                     output = output[..., :size[0], :size[1]]
-                else:
-                    output = model(image)[0]
 
             self.metric.update(output, target)
             pixAcc, mIoU = self.metric.get()
@@ -104,7 +105,9 @@ class Evaluator(object):
 if __name__ == '__main__':
     args = parse_args()
     cfg.update_from_file(args.config_file)
+    cfg.update_from_list(args.opts)
     cfg.PHASE = 'test'
+    cfg.ROOT_PATH = root_path
     cfg.check_and_freeze()
 
     default_setup(args)

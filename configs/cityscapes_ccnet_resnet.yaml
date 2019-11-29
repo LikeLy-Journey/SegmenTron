@@ -1,0 +1,19 @@
+DATASET:
+    NAME: "cityscape"
+    MEAN: [0.485, 0.456, 0.406]
+    STD: [0.229, 0.224, 0.225]
+TRAIN:
+    EPOCHS: 240
+    BATCH_SIZE: 4
+    CROP_SIZE: 768
+TEST:
+    BATCH_SIZE: 2
+
+SOLVER:
+    LR: 0.003
+
+MODEL:
+    MODEL_NAME: "CCNet"
+    BACKBONE: "resnet101"
+    OUTPUT_STRIDE: 16
+

@@ -40,7 +40,7 @@ class COCOSegmentation(SegmentationDataset):
                 1, 64, 20, 63, 7, 72]
     NUM_CLASS = 21
 
-    def __init__(self, root='../datasets/coco', split='train', mode=None, transform=None, **kwargs):
+    def __init__(self, root='datasets/coco', split='train', mode=None, transform=None, **kwargs):
         super(COCOSegmentation, self).__init__(root, split, mode, transform, **kwargs)
         # lazy import pycocotools
         from pycocotools.coco import COCO
@@ -48,12 +48,12 @@ class COCOSegmentation(SegmentationDataset):
         if split == 'train':
             print('train set')
             ann_file = os.path.join(root, 'annotations/instances_train2017.json')
-            ids_file = os.path.join(root, 'annotations/train_ids.mx')
+            ids_file = os.path.join(root, 'annotations/train_ids.pkl')
             self.root = os.path.join(root, 'train2017')
         else:
             print('val set')
             ann_file = os.path.join(root, 'annotations/instances_val2017.json')
-            ids_file = os.path.join(root, 'annotations/val_ids.mx')
+            ids_file = os.path.join(root, 'annotations/val_ids.pkl')
             self.root = os.path.join(root, 'val2017')
         self.coco = COCO(ann_file)
         self.coco_mask = mask
@@ -85,7 +85,10 @@ class COCOSegmentation(SegmentationDataset):
         # general resize, normalize and toTensor
         if self.transform is not None:
             img = self.transform(img)
-        return img, mask, os.path.basename(self.ids[index])
+        return img, mask, os.path.basename(path)
+
+    def __len__(self):
+        return len(self.ids)
 
     def _mask_transform(self, mask):
         return torch.LongTensor(np.array(mask).astype('int32'))
@@ -94,7 +97,7 @@ class COCOSegmentation(SegmentationDataset):
         mask = np.zeros((h, w), dtype=np.uint8)
         coco_mask = self.coco_mask
         for instance in target:
-            rle = coco_mask.frPyObjects(instance['Segmentation'], h, w)
+            rle = coco_mask.frPyObjects(instance['segmentation'], h, w)
             m = coco_mask.decode(rle)
             cat = instance['category_id']
             if cat in self.CAT_LIST:

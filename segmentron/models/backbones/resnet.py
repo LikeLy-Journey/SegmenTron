@@ -126,6 +126,7 @@ class ResNetV1(nn.Module):
                                        norm_layer=norm_layer, multi_grid=cfg.MODEL.DANET.MULTI_GRID,
                                        multi_dilation=cfg.MODEL.DANET.MULTI_DILATION)
 
+        self.last_inp_channels = int(512 * block.expansion * scale)
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(int(512 * block.expansion * scale), num_classes)
 

@@ -27,6 +27,7 @@ class XceptionBlock(nn.Module):
                                          relu_first=relu_first, norm_layer=norm_layer)
         self.sep_conv3 = SeparableConv2d(channel_list[2], channel_list[3], dilation=dilation,
                                          relu_first=relu_first, stride=stride, norm_layer=norm_layer)
+        self.last_inp_channels = channel_list[3]
 
     def forward(self, inputs):
         sc1 = self.sep_conv1(inputs)

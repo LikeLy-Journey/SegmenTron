@@ -12,8 +12,10 @@ __all__ = ['DeepLabV3Plus']
 @MODEL_REGISTRY.register(name='DeepLabV3_Plus')
 class DeepLabV3Plus(SegBaseModel):
     r"""DeepLabV3Plus
+    Reference:
+        Chen, Liang-Chieh, et al. "Encoder-Decoder with Atrous Separable Convolution for Semantic
+        Image Segmentation."
     """
-
     def __init__(self):
         super(DeepLabV3Plus, self).__init__()
         if self.backbone.startswith('mobilenet'):
