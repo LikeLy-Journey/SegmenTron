@@ -5,6 +5,7 @@ import torch.nn.functional as F
 from .segbase import SegBaseModel
 from .model_zoo import MODEL_REGISTRY
 from ..modules import _ConvBNReLU, SeparableConv2d, _ASPP, _FCNHead
+from ..config import cfg
 
 __all__ = ['DeepLabV3Plus']
 
@@ -48,16 +49,27 @@ class DeepLabV3Plus(SegBaseModel):
 class _DeepLabHead(nn.Module):
     def __init__(self, nclass, c1_channels=256, c4_channels=2048, norm_layer=nn.BatchNorm2d):
         super(_DeepLabHead, self).__init__()
-        self.aspp = _ASPP(c4_channels, 256)
-        self.c1_block = _ConvBNReLU(c1_channels, 48, 1, norm_layer=norm_layer)
+        self.use_aspp = cfg.MODEL.DEEPLABV3_PLUS.USE_ASPP
+        self.use_decoder = cfg.MODEL.DEEPLABV3_PLUS.ENABLE_DECODER
+        last_channels = c4_channels
+        if self.use_aspp:
+            self.aspp = _ASPP(c4_channels, 256)
+            last_channels = 256
+        if self.use_decoder:
+            self.c1_block = _ConvBNReLU(c1_channels, 48, 1, norm_layer=norm_layer)
+            last_channels += 48
         self.block = nn.Sequential(
-            SeparableConv2d(304, 256, 3, norm_layer=norm_layer, relu_first=False),
+            SeparableConv2d(last_channels, 256, 3, norm_layer=norm_layer, relu_first=False),
             SeparableConv2d(256, 256, 3, norm_layer=norm_layer, relu_first=False),
             nn.Conv2d(256, nclass, 1))
 
     def forward(self, x, c1):
         size = c1.size()[2:]
-        c1 = self.c1_block(c1)
-        x = self.aspp(x)
-        x = F.interpolate(x, size, mode='bilinear', align_corners=True)
-        return self.block(torch.cat([x, c1], dim=1))
+        if self.use_aspp:
+            x = self.aspp(x)
+        if self.use_decoder:
+            x = F.interpolate(x, size, mode='bilinear', align_corners=True)
+            c1 = self.c1_block(c1)
+            return self.block(torch.cat([x, c1], dim=1))
+
+        return self.block(x)

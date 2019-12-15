@@ -21,7 +21,7 @@ implemented in PyTorch.
 Model|Backbone|Datasets|eval size|Mean IoU(paper)|Mean IoU(this repo)|FPS|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 |ICnet|resnet50(0.5)|cityscape(val)|(1024,2048)|67.8|-|41.39|
-|DeepLabv3_plus|mobilenetV2|cityscape(val)|(1024,2048)|70.5|-|46.64|
+|DeepLabv3_plus|mobilenetV2|cityscape(val)|(1024,2048)|70.7|-|46.64|
 |BiSeNet|resnet18|cityscape(val)|(1024,2048)|-|-|39.90|
 |LEDNet|-|cityscape(val)|(1024,2048)|-|-|31.78|
 |CGNet|-|cityscape(val)|(1024,2048)|-|-|46.11|

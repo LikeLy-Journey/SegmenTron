@@ -10,7 +10,7 @@ TRAIN:
 
 TEST:
     BATCH_SIZE: 4
-    TEST_MODEL_PATH: trained_models/hrnet_w18_small_v1_segmentron.pth
+#    TEST_MODEL_PATH: trained_models/hrnet_w18_small_v1_segmentron.pth
 
 SOLVER:
     LR: 0.01

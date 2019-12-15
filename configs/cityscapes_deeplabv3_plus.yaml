@@ -7,7 +7,7 @@ TRAIN:
     BATCH_SIZE: 4
     CROP_SIZE: 769
 TEST:
-    BATCH_SIZE: 4
+    BATCH_SIZE: 3
     CROP_SIZE: (1025, 2049)
 #    TEST_MODEL_PATH: trained_models/deeplabv3_plus_xception_segmentron.pth
 
@@ -18,3 +18,4 @@ MODEL:
     MODEL_NAME: "DeepLabV3_Plus"
     BACKBONE: "xception65"
     BN_EPS_FOR_ENCODER: 1e-3
+    OUTPUT_STRIDE: 8

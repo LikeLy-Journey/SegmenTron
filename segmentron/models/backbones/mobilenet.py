@@ -92,6 +92,7 @@ class MobileNetV2(nn.Module):
         self.block5 = self._make_layer(InvertedResidual, self.planes, inverted_residual_setting[5:],
                                        dilations[1], norm_layer=norm_layer)
         self.last_inp_channels = self.planes
+
         # building last several layers
         # features = list()
         # features.append(_ConvBNReLU(input_channels, last_channels, 1, relu6=True, norm_layer=norm_layer))

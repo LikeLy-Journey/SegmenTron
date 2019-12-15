@@ -1,0 +1,24 @@
+DATASET:
+    NAME: "coco"
+    MEAN: [0.485, 0.456, 0.406]
+    STD: [0.229, 0.224, 0.225]
+    MODE: 'val'
+TRAIN:
+    EPOCHS: 30
+    BATCH_SIZE: 8
+    CROP_SIZE: 480
+    BASE_SIZE: 520
+    BACKBONE_PRETRAINED_PATH: "/workspace/pretrained_models/mobilenet-convert-from-torchvision.pth"
+TEST:
+    BATCH_SIZE: 8
+
+SOLVER:
+    LR: 0.01
+
+MODEL:
+    MODEL_NAME: "DeepLabV3_Plus"
+    BACKBONE: "mobilenet_v2"
+    OUTPUT_STRIDE: 16
+    DEEPLABV3_PLUS:
+        USE_ASPP: False
+        ENABLE_DECODER: False
