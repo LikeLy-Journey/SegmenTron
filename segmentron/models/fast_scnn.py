@@ -29,30 +29,40 @@ class FastSCNN(SegBaseModel):
                         'feature_fusion', 'classifier']
 
         if self.aux:
-            self.auxlayer = nn.Sequential(
+            self.auxlayer1 = nn.Sequential(
                 nn.Conv2d(64, 32, 3, padding=1, bias=False),
                 self.norm_layer(32),
                 nn.ReLU(True),
                 nn.Dropout(0.1),
                 nn.Conv2d(32, self.nclass, 1)
             )
-            decoder_list += ['auxlayer']
+            self.auxlayer2 = nn.Sequential(
+                nn.Conv2d(128, 32, 3, padding=1, bias=False),
+                self.norm_layer(32),
+                nn.ReLU(True),
+                nn.Dropout(0.1),
+                nn.Conv2d(32, self.nclass, 1)
+            )
+            decoder_list += ['auxlayer1', 'auxlayer2']
 
         self.__setattr__('decoder', decoder_list)
 
     def forward(self, x):
         size = x.size()[2:]
         higher_res_features = self.learning_to_downsample(x)
-        x = self.global_feature_extractor(higher_res_features)
-        x = self.feature_fusion(higher_res_features, x)
+        lower_res_features = self.global_feature_extractor(higher_res_features)
+        x = self.feature_fusion(higher_res_features, lower_res_features)
         x = self.classifier(x)
         outputs = []
         x = F.interpolate(x, size, mode='bilinear', align_corners=True)
         outputs.append(x)
         if self.aux:
-            auxout = self.auxlayer(higher_res_features)
-            auxout = F.interpolate(auxout, size, mode='bilinear', align_corners=True)
-            outputs.append(auxout)
+            auxout1 = self.auxlayer1(higher_res_features)
+            auxout1 = F.interpolate(auxout1, size, mode='bilinear', align_corners=True)
+            auxout2 = self.auxlayer2(lower_res_features)
+            auxout2 = F.interpolate(auxout2, size, mode='bilinear', align_corners=True)
+            outputs.append(auxout1)
+            outputs.append(auxout2)
         return tuple(outputs)
 
 

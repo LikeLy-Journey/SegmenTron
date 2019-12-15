@@ -101,6 +101,10 @@ cfg.TEST.TEST_MODEL_PATH = ''
 cfg.TEST.BATCH_SIZE = 1
 # eval crop size
 cfg.TEST.CROP_SIZE = None
+# multiscale eval
+cfg.TEST.SCALES = [1.0]
+# flip
+cfg.TEST.FLIP = False
 
 ########################## visual config ###########################################
 # visual result output dir
@@ -140,7 +144,7 @@ cfg.MODEL.DANET.MULTI_GRID = False
 
 ########################## DeepLab config ####################################
 # whether to use aspp
-cfg.MODEL.DEEPLABV3_PLUS.ENCODER_WITH_ASPP = True
+cfg.MODEL.DEEPLABV3_PLUS.USE_ASPP = True
 # whether to use decoder
 cfg.MODEL.DEEPLABV3_PLUS.ENABLE_DECODER = True
 # whether aspp use sep conv

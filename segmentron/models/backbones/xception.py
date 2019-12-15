@@ -2,7 +2,7 @@ import torch.nn as nn
 
 from ...modules import SeparableConv2d
 from .build import BACKBONE_REGISTRY
-
+from ...config import cfg
 
 __all__ = ['Xception65', 'Enc', 'FCAttention']
 
@@ -51,11 +51,10 @@ class XceptionBlock(nn.Module):
             return outputs
 
 
-@BACKBONE_REGISTRY.register()
 class Xception65(nn.Module):
-    def __init__(self, output_stride=16, norm_layer=nn.BatchNorm2d):
+    def __init__(self, norm_layer=nn.BatchNorm2d):
         super().__init__()
-
+        output_stride = cfg.MODEL.OUTPUT_STRIDE
         if output_stride == 32:
             entry_block3_stride = 2
             middle_block_dilation = 1

@@ -71,35 +71,22 @@ class Evaluator(object):
             model = self.model
 
         logging.info("Start validation, Total sample: {:d}".format(len(self.val_loader)))
+        import time
+        time_start = time.time()
         for i, (image, target, filename) in enumerate(self.val_loader):
             image = image.to(self.device)
             target = target.to(self.device)
 
             with torch.no_grad():
-                if cfg.DATASET.MODE == 'val' or cfg.TEST.CROP_SIZE is None:
-                    output = model(image)[0]
-                else:
-                    size = image.size()[2:]
-                    pad_height = cfg.TEST.CROP_SIZE[0] - size[0]
-                    pad_width = cfg.TEST.CROP_SIZE[1] - size[1]
-                    image = F.pad(image, (0, pad_height, 0, pad_width))
-                    output = model(image)[0]
-                    output = output[..., :size[0], :size[1]]
+                output = model.evaluate(image)
 
             self.metric.update(output, target)
             pixAcc, mIoU = self.metric.get()
             logging.info("Sample: {:d}, validation pixAcc: {:.3f}, mIoU: {:.3f}".format(
                 i + 1, pixAcc * 100, mIoU * 100))
 
-            # Todo
-            # if self.args.save_pred:
-            #     pred = torch.argmax(output, 1)
-            #     pred = pred.cpu().data.numpy()
-            #
-            #     predict = pred.squeeze(0)
-            #     mask = get_color_pallete(predict, self.args.dataset)
-            #     mask.save(os.path.join(outdir, os.path.splitext(filename[0])[0] + '.png'))
         synchronize()
+        logging.info('Eval use time: {}'.format(time.time() - time_start))
 
 
 if __name__ == '__main__':

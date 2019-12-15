@@ -3,18 +3,24 @@ DATASET:
     MEAN: [0.485, 0.456, 0.406]
     STD: [0.229, 0.224, 0.225]
 TRAIN:
-    EPOCHS: 600
+    EPOCHS: 400
     BATCH_SIZE: 8
     CROP_SIZE: 769
+    PRETRAINED_MODEL_PATH: "runs/checkpoints/DeepLabV3_Plus_mobilenet_v2_coco_2019-12-03-15-40/best_model.pth"
+    #BACKBONE_PRETRAINED_PATH: "/workspace/pretrained_models/mobilenet-convert-from-torchvision.pth"
+
 TEST:
-    BATCH_SIZE: 4
+    BATCH_SIZE: 8
     CROP_SIZE: (1025, 2049)
 
 SOLVER:
-    LR: 0.04
+    LR: 0.02
 
 MODEL:
     MODEL_NAME: "DeepLabV3_Plus"
     BACKBONE: "mobilenet_v2"
-    OUTPUT_STRIDE: 32
+    OUTPUT_STRIDE: 16
+    DEEPLABV3_PLUS:
+        USE_ASPP: False
+        ENABLE_DECODER: False
 
