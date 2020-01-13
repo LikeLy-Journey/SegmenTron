@@ -33,14 +33,14 @@ class FastSCNN(SegBaseModel):
                 nn.Conv2d(64, 32, 3, padding=1, bias=False),
                 self.norm_layer(32),
                 nn.ReLU(True),
-                nn.Dropout(0.1),
+                nn.Dropout2d(0.1),
                 nn.Conv2d(32, self.nclass, 1)
             )
             self.auxlayer2 = nn.Sequential(
                 nn.Conv2d(128, 32, 3, padding=1, bias=False),
                 self.norm_layer(32),
                 nn.ReLU(True),
-                nn.Dropout(0.1),
+                nn.Dropout2d(0.1),
                 nn.Conv2d(32, self.nclass, 1)
             )
             decoder_list += ['auxlayer1', 'auxlayer2']
@@ -150,7 +150,7 @@ class Classifer(nn.Module):
         self.dsconv2 = SeparableConv2d(dw_channels, dw_channels, stride=stride, relu_first=False,
                                        norm_layer=norm_layer)
         self.conv = nn.Sequential(
-            nn.Dropout(0.1),
+            nn.Dropout2d(0.1),
             nn.Conv2d(dw_channels, num_classes, 1)
         )
 

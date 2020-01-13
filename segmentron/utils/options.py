@@ -2,7 +2,7 @@ import argparse
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Segmentron')
-    parser.add_argument('config_file',
+    parser.add_argument('--config-file', metavar="FILE",
                         help='config file path')
     # cuda setting
     parser.add_argument('--no-cuda', action='store_true', default=False,

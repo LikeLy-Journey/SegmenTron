@@ -93,7 +93,8 @@ cfg.SOLVER.OHEM = False
 cfg.SOLVER.AUX = False
 # aux loss weight
 cfg.SOLVER.AUX_WEIGHT = 0.4
-
+# loss name
+cfg.SOLVER.LOSS_NAME = ''
 ########################## test config ###########################################
 # val/test model path
 cfg.TEST.TEST_MODEL_PATH = ''

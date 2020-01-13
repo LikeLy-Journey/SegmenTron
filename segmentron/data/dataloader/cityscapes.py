@@ -14,7 +14,7 @@ class CitySegmentation(SegmentationDataset):
     Parameters
     ----------
     root : string
-        Path to Cityscapes folder. Default is './datasets/citys'
+        Path to Cityscapes folder. Default is './datasets/cityscapes'
     split: string
         'train', 'val' or 'test'
     transform : callable, optional
@@ -94,6 +94,13 @@ class CitySegmentation(SegmentationDataset):
     @property
     def pred_offset(self):
         return 0
+
+    @property
+    def classes(self):
+        """Category names."""
+        return ('road', 'sidewalk', 'building', 'wall', 'fence', 'pole', 'traffic light',
+                'traffic sign', 'vegetation', 'terrain', 'sky', 'person', 'rider', 'car',
+                'truck', 'bus', 'train', 'motorcycle', 'bicycle')
 
 
 def _get_city_pairs(folder, split='train'):

@@ -13,6 +13,7 @@ import torch.nn as nn
 import torch.utils.data as data
 import torch.nn.functional as F
 
+from tabulate import tabulate
 from torchvision import transforms
 from segmentron.data.dataloader import get_segmentation_dataset
 from segmentron.models.model_zoo import get_segmentation_model
@@ -42,7 +43,7 @@ class Evaluator(object):
                                           batch_sampler=val_batch_sampler,
                                           num_workers=cfg.DATASET.WORKERS,
                                           pin_memory=True)
-
+        self.classes = val_dataset.classes
         # create network
         self.model = get_segmentation_model().to(self.device)
 
@@ -86,7 +87,17 @@ class Evaluator(object):
                 i + 1, pixAcc * 100, mIoU * 100))
 
         synchronize()
-        logging.info('Eval use time: {}'.format(time.time() - time_start))
+        pixAcc, mIoU, category_iou = self.metric.get(return_category_iou=True)
+        logging.info('Eval use time: {:.3f} second'.format(time.time() - time_start))
+        logging.info('End validation pixAcc: {:.3f}, mIoU: {:.3f}'.format(
+                pixAcc * 100, mIoU * 100))
+
+        headers = ['class id', 'class name', 'iou']
+        table = []
+        for i, cls_name in enumerate(self.classes):
+            table.append([cls_name, category_iou[i]])
+        logging.info('Category iou: \n {}'.format(tabulate(table, headers, tablefmt='grid', showindex="always",
+                                                           numalign='center', stralign='center')))
 
 
 if __name__ == '__main__':
