@@ -21,14 +21,14 @@ implemented in PyTorch.
 Model|Backbone|Datasets|eval size|Mean IoU(paper)|Mean IoU(this repo)|FPS|
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 |ICnet|resnet50(0.5)|cityscape(val)|(1024,2048)|67.8|-|41.39|
-|DeepLabv3_plus|mobilenetV2|cityscape(val)|(1024,2048)|70.7|-|46.64|
+|DeepLabv3_plus|mobilenetV2|cityscape(val)|(1024,2048)|70.7|[70.3](https://github.com/LikeLy-Journey/SegmenTron/releases/download/v0.1.0/deeplabv3_plus_mobilenetv2_segmentron.pth)|46.64|
 |BiSeNet|resnet18|cityscape(val)|(1024,2048)|-|-|39.90|
 |LEDNet|-|cityscape(val)|(1024,2048)|-|-|31.78|
 |CGNet|-|cityscape(val)|(1024,2048)|-|-|46.11|
 |HardNet|-|cityscape(val)|(1024,2048)|75.9|-|69.06|
 |DFANet|xceptionA|cityscape(val)|(1024,2048)|70.3|-|21.46|
 |HRNet|w18_small_v1|cityscape(val)|(1024,2048)|70.3|[70.5](https://github.com/LikeLy-Journey/SegmenTron/releases/download/v0.1.0/hrnet_w18_small_v1_segmentron.pth)|66.01|
-|Fast_SCNN|-|cityscape(val)|(1024,2048)|68.3|[67.3](https://github.com/LikeLy-Journey/SegmenTron/releases/download/v0.1.0/fast_scnn_segmentron.pth)|145.77|
+|Fast_SCNN|-|cityscape(val)|(1024,2048)|68.3|[68.9](https://github.com/LikeLy-Journey/SegmenTron/releases/download/v0.1.0/fast_scnn_segmentron.pth)|145.77|
 
 FPS was tested on V100.
 
