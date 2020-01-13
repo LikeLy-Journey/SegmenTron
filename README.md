@@ -71,7 +71,7 @@ pretrained backbone models will be download automatically in pytorch default dir
 ## Train
 ### Train with a single GPU
 ```
-CUDA_VISIBLE_DEVICES=0 python -u tools/train.py configs/cityscapes_deeplabv3_plus.yaml
+CUDA_VISIBLE_DEVICES=0 python -u tools/train.py --config-file configs/cityscapes_deeplabv3_plus.yaml
 ```
 ### Train with multiple GPUs
 ```
@@ -82,7 +82,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 ./tools/dist_train.sh ${CONFIG_FILE} ${GPU_NUM} [op
 ### Eval with a single GPU
 You can download trained model from model zoo table above, or train by yourself.
 ```
-CUDA_VISIBLE_DEVICES=0 python -u ./tools/eval.py configs/cityscapes_deeplabv3_plus.yaml \
+CUDA_VISIBLE_DEVICES=0 python -u ./tools/eval.py --config-file configs/cityscapes_deeplabv3_plus.yaml \
 TEST.TEST_MODEL_PATH your_test_model_path
 
 ```
