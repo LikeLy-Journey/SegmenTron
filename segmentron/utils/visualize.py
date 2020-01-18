@@ -1,6 +1,11 @@
 import os
+import logging
 import numpy as np
+import torch
+
 from PIL import Image
+#from torchsummary import summary
+from thop import profile
 
 __all__ = ['get_color_pallete', 'print_iou', 'set_img_color',
            'show_prediction', 'show_colorful_images', 'save_colorful_images']
@@ -26,6 +31,15 @@ def print_iou(iu, mean_pixel_acc, class_names=None, show_no_back=False):
     line = "\n".join(lines)
 
     print(line)
+
+
+def show_flops_params(model, device, input_shape=[1, 3, 1024, 2048]):
+    #summary(model, tuple(input_shape[1:]), device=device)
+    input = torch.randn(*input_shape).to(torch.device(device))
+    flops, params = profile(model, inputs=(input,), verbose=False)
+
+    logging.info('{} flops: {:.3f}G input shape is {}, params: {:.3f}M'.format(
+        model.__class__.__name__, flops / 1000000000, input_shape[1:], params / 1000000))
 
 
 def set_img_color(img, label, colors, background=0, show255=False):

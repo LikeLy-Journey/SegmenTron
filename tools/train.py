@@ -24,6 +24,7 @@ from segmentron.utils.score import SegmentationMetric
 from segmentron.utils.filesystem import save_checkpoint
 from segmentron.utils.options import parse_args
 from segmentron.utils.default_setup import default_setup
+from segmentron.utils.visualize import show_flops_params
 from segmentron.config import cfg
 
 class Trainer(object):
@@ -60,6 +61,13 @@ class Trainer(object):
 
         # create network
         self.model = get_segmentation_model().to(self.device)
+        # print params and flops
+        if get_rank() == 0:
+            try:
+                show_flops_params(self.model, args.device)
+            except Exception as e:
+                logging.warning('get flops and params error: {}'.format(e))
+
         if cfg.MODEL.BN_TYPE not in ['BN']:
             logging.info('Batch norm type is {}, convert_sync_batchnorm is not effective'.format(cfg.MODEL.BN_TYPE))
         elif args.distributed and cfg.TRAIN.SYNC_BATCH_NORM:

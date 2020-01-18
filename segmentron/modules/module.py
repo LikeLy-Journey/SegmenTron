@@ -4,10 +4,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from collections import OrderedDict
-from .basic import _ConvBNReLU, SeparableConv2d
+from .basic import _ConvBNReLU, SeparableConv2d, _ConvBN, _BNPReLU, _ConvBNPReLU
 from ..config import cfg
 
-__all__ = ['_FCNHead', '_ASPP', 'PyramidPooling', 'PAM_Module', 'CAM_Module']
+__all__ = ['_FCNHead', '_ASPP', 'PyramidPooling', 'PAM_Module', 'CAM_Module', 'EESP']
 
 
 class _FCNHead(nn.Module):
@@ -160,3 +160,48 @@ class CAM_Module(nn.Module):
 
         out = self.gamma*out + x
         return out
+
+
+class EESP(nn.Module):
+
+    def __init__(self, in_channels, out_channels, stride=1, k=4, r_lim=7, down_method='esp', norm_layer=nn.BatchNorm2d):
+        super(EESP, self).__init__()
+        self.stride = stride
+        n = int(out_channels / k)
+        n1 = out_channels - (k - 1) * n
+        assert down_method in ['avg', 'esp'], 'One of these is suppported (avg or esp)'
+        assert n == n1, "n(={}) and n1(={}) should be equal for Depth-wise Convolution ".format(n, n1)
+        self.proj_1x1 = _ConvBNPReLU(in_channels, n, 1, stride=1, groups=k, norm_layer=norm_layer)
+
+        map_receptive_ksize = {3: 1, 5: 2, 7: 3, 9: 4, 11: 5, 13: 6, 15: 7, 17: 8}
+        self.k_sizes = list()
+        for i in range(k):
+            ksize = int(3 + 2 * i)
+            ksize = ksize if ksize <= r_lim else 3
+            self.k_sizes.append(ksize)
+        self.k_sizes.sort()
+        self.spp_dw = nn.ModuleList()
+        for i in range(k):
+            dilation = map_receptive_ksize[self.k_sizes[i]]
+            self.spp_dw.append(nn.Conv2d(n, n, 3, stride, dilation, dilation=dilation, groups=n, bias=False))
+        self.conv_1x1_exp = _ConvBN(out_channels, out_channels, 1, 1, groups=k, norm_layer=norm_layer)
+        self.br_after_cat = _BNPReLU(out_channels, norm_layer)
+        self.module_act = nn.PReLU(out_channels)
+        self.downAvg = True if down_method == 'avg' else False
+
+    def forward(self, x):
+        output1 = self.proj_1x1(x)
+        output = [self.spp_dw[0](output1)]
+        for k in range(1, len(self.spp_dw)):
+            out_k = self.spp_dw[k](output1)
+            out_k = out_k + output[k - 1]
+            output.append(out_k)
+        expanded = self.conv_1x1_exp(self.br_after_cat(torch.cat(output, 1)))
+        del output
+        if self.stride == 2 and self.downAvg:
+            return expanded
+
+        if expanded.size() == x.size():
+            expanded = expanded + x
+
+        return self.module_act(expanded)
