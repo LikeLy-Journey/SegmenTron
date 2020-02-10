@@ -117,7 +117,7 @@ class Trainer(object):
         self.save_to_disk = get_rank() == 0
         epochs, max_iters, iters_per_epoch = cfg.TRAIN.EPOCHS, self.max_iters, self.iters_per_epoch
         log_per_iters, val_per_iters = self.args.log_iter, self.args.val_epoch * self.iters_per_epoch
-        # save_per_iters = cfg.TRAIN.SNAPSHOT_EPOCH * self.iters_per_epoch
+
         start_time = time.time()
         logging.info('Start training, Total Epochs: {:d} = Total Iterations {:d}'.format(epochs, max_iters))
 
@@ -156,7 +156,6 @@ class Trainer(object):
                         str(datetime.timedelta(seconds=int(time.time() - start_time))),
                         eta_string))
 
-            #if iteration % save_per_iters == 0 and self.save_to_disk:
             if iteration % self.iters_per_epoch == 0 and self.save_to_disk:
                 save_checkpoint(self.model, epoch, self.optimizer, self.lr_scheduler, is_best=False)
 
