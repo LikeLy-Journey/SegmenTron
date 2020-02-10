@@ -6,8 +6,6 @@ TRAIN:
     EPOCHS: 400
     BATCH_SIZE: 8
     CROP_SIZE: 769
-    PRETRAINED_MODEL_PATH: "runs/checkpoints/DeepLabV3_Plus_mobilenet_v2_coco_2019-12-03-15-40/best_model.pth"
-    #BACKBONE_PRETRAINED_PATH: "/workspace/pretrained_models/mobilenet-convert-from-torchvision.pth"
 
 TEST:
     BATCH_SIZE: 8
