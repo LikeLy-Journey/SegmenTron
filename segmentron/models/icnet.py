@@ -27,6 +27,7 @@ class ICNet(SegBaseModel):
         self.__setattr__('decoder', ['conv_sub1', 'head'])
 
     def forward(self, x):
+        size = x.size()[2:]
         # sub 1
         x_sub1 = self.conv_sub1(x)
 
@@ -38,7 +39,7 @@ class ICNet(SegBaseModel):
         x_sub4 = F.interpolate(x, scale_factor=0.25, mode='bilinear', align_corners=True)
         _, _, _, x_sub4 = self.encoder(x_sub4)
 
-        outputs = self.head(x_sub1, x_sub2, x_sub4)
+        outputs = self.head(x_sub1, x_sub2, x_sub4, size)
 
         return tuple(outputs)
 
@@ -51,7 +52,7 @@ class _ICHead(nn.Module):
         self.cff_24 = CascadeFeatureFusion(int(2048 * scale), int(512 * scale), 128, nclass, norm_layer)
         self.conv_cls = nn.Conv2d(128, nclass, 1, bias=False)
 
-    def forward(self, x_sub1, x_sub2, x_sub4):
+    def forward(self, x_sub1, x_sub2, x_sub4, size):
         outputs = list()
         x_cff_24, x_24_cls = self.cff_24(x_sub4, x_sub2)
         outputs.append(x_24_cls)
@@ -61,7 +62,8 @@ class _ICHead(nn.Module):
         up_x2 = F.interpolate(x_cff_12, scale_factor=2, mode='bilinear', align_corners=True)
         up_x2 = self.conv_cls(up_x2)
         outputs.append(up_x2)
-        up_x8 = F.interpolate(up_x2, scale_factor=4, mode='bilinear', align_corners=True)
+
+        up_x8 = F.interpolate(up_x2, size, mode='bilinear', align_corners=True)
         outputs.append(up_x8)
         # 1 -> 1/4 -> 1/8 -> 1/16
         outputs.reverse()

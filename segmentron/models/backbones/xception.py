@@ -176,7 +176,7 @@ class BlockA(nn.Module):
             self.skipbn = norm_layer(out_channels)
         else:
             self.skip = None
-        self.relu = nn.ReLU(True)
+        self.relu = nn.ReLU()
         rep = list()
         inter_channels = out_channels // 4
 
