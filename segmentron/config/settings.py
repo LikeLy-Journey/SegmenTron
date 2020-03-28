@@ -174,9 +174,6 @@ cfg.MODEL.CCNET.RECURRENCE = 2
 cfg.MODEL.CGNET.STAGE2_BLOCK_NUM = 3
 cfg.MODEL.CGNET.STAGE3_BLOCK_NUM = 21
 
-########################## PointRend config ##################################
-cfg.MODEL.POINTREND.BASEMODEL = 'DeepLabV3_Plus'
-
 ########################## hrnet config ######################################
 cfg.MODEL.HRNET.PRETRAINED_LAYERS = ['*']
 cfg.MODEL.HRNET.STEM_INPLANES = 64

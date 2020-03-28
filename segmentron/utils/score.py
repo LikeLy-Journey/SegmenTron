@@ -30,7 +30,10 @@ class SegmentationMetric(object):
         """
 
         def reduce_tensor(tensor):
-            rt = tensor.clone()
+            if isinstance(tensor, torch.Tensor):
+                rt = tensor.clone()
+            else:
+                rt = copy.deepcopy(tensor)
             dist.all_reduce(rt, op=dist.ReduceOp.SUM)
             return rt
 
