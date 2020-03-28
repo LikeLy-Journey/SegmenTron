@@ -47,10 +47,9 @@ class Evaluator(object):
         # create network
         self.model = get_segmentation_model().to(self.device)
 
-        if hasattr(self.model, 'encoder') and hasattr(self.model.encoder, 'named_modules') and \
-            cfg.MODEL.BN_EPS_FOR_ENCODER:
-            logging.info('set bn custom eps for bn in encoder: {}'.format(cfg.MODEL.BN_EPS_FOR_ENCODER))
-            self.set_batch_norm_attr(self.model.encoder.named_modules(), 'eps', cfg.MODEL.BN_EPS_FOR_ENCODER)
+        if hasattr(self.model, 'encoder') and cfg.MODEL.BN_EPS_FOR_ENCODER:
+                logging.info('set bn custom eps for bn in encoder: {}'.format(cfg.MODEL.BN_EPS_FOR_ENCODER))
+                self.set_batch_norm_attr(self.model.encoder.named_modules(), 'eps', cfg.MODEL.BN_EPS_FOR_ENCODER)
 
         if args.distributed:
             self.model = nn.parallel.DistributedDataParallel(self.model,

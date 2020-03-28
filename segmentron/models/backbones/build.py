@@ -3,7 +3,6 @@ import torch
 import logging
 import torch.utils.model_zoo as model_zoo
 
-from ...utils.download import download
 from ...utils.registry import Registry
 from ...config import cfg
 
@@ -43,14 +42,7 @@ def load_backbone_pretrained(model, backbone):
             return
         else:
             logging.info('load backbone pretrained model from url..')
-            try:
-                msg = model.load_state_dict(model_zoo.load_url(model_urls[backbone]), strict=False)
-            except Exception as e:
-                logging.warning(e)
-                logging.info('Use torch download failed, try custom method!')
-                
-                msg = model.load_state_dict(torch.load(download(model_urls[backbone], 
-                        path=os.path.join(torch.hub._get_torch_home(), 'checkpoints'))), strict=False)
+            msg = model.load_state_dict(model_zoo.load_url(model_urls[backbone]), strict=False)
             logging.info(msg)
 
 
