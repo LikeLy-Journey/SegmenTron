@@ -25,3 +25,4 @@ from .contextnet import ContextNet
 from .espnetv2 import ESPNetV2
 from .enet import ENet
 from .edanet import EDANet
+from .pointrend import PointRend

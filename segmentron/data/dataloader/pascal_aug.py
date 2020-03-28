@@ -73,6 +73,9 @@ class VOCAugSegmentation(SegmentationDataset):
             img, target = self._sync_transform(img, target)
         elif self.mode == 'val':
             img, target = self._val_sync_transform(img, target)
+        elif self.mode == 'testval':
+            logging.warn("Use mode of testval, you should set batch size=1")
+            img, target = self._img_transform(img), self._mask_transform(target)
         else:
             raise RuntimeError('unknown mode for dataloader: {}'.format(self.mode))
         # general resize, normalize and toTensor
