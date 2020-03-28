@@ -1,7 +1,6 @@
 """Pascal VOC Semantic Segmentation Dataset."""
 import os
 import torch
-import logging
 import numpy as np
 
 from PIL import Image
@@ -85,7 +84,6 @@ class VOCSegmentation(SegmentationDataset):
             img, mask = self._val_sync_transform(img, mask)
         else:
             assert self.mode == 'testval'
-            logging.warn("Use mode of testval, you should set batch size=1")
             img, mask = self._img_transform(img), self._mask_transform(mask)
         # general resize, normalize and toTensor
         if self.transform is not None:
