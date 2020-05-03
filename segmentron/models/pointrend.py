@@ -32,7 +32,15 @@ class PointRend(SegBaseModel):
 class PointHead(nn.Module):
     def __init__(self, in_c=275, num_classes=19, k=3, beta=0.75):
         super().__init__()
-        self.mlp = nn.Conv1d(in_c, num_classes, 1)
+        self.mlp = nn.Sequential(
+            nn.Conv1d(in_c, 256, kernel_size=1, stride=1, padding=0, bias=True),
+            nn.ReLU(True),
+            nn.Conv1d(256, 256, kernel_size=1, stride=1, padding=0, bias=True),
+            nn.ReLU(True),
+            nn.Conv1d(256, 256, kernel_size=1, stride=1, padding=0, bias=True),
+            nn.ReLU(True),
+            nn.Conv1d(256, num_classes, 1)
+            )
         self.k = k
         self.beta = beta
 
@@ -47,7 +55,10 @@ class PointHead(nn.Module):
         if not self.training:
             return self.inference(x, res2, out)
 
-        points = sampling_points(out, x.shape[-1] // 16, self.k, self.beta)
+        # out = F.interpolate(out, size=x.shape[-2:], mode="bilinear", align_corners=True)
+        # res2 = F.interpolate(res2, size=out.shape[-2:], mode="bilinear", align_corners=True)
+        N = x.shape[-1] // 16
+        points = sampling_points(out, N * N, self.k, self.beta)
 
         coarse = point_sample(out, points, align_corners=False)
         fine = point_sample(res2, points, align_corners=False)
@@ -66,8 +77,9 @@ class PointHead(nn.Module):
         """
         num_points = 8096
         
-        while out.shape[-1] != x.shape[-1]:
-            out = F.interpolate(out, scale_factor=2, mode="bilinear", align_corners=True)
+        while out.shape[-1] * 2 < x.shape[-1]:
+            out = F.interpolate(out, scale_factor=2, mode="bilinear", align_corners=False)
+            # res2 = F.interpolate(res2, size=out.shape[-2:], mode="bilinear", align_corners=True)
 
             points_idx, points = sampling_points(out, num_points, training=self.training)
 
@@ -83,7 +95,24 @@ class PointHead(nn.Module):
             out = (out.reshape(B, C, -1)
                       .scatter_(2, points_idx, rend)
                       .view(B, C, H, W))
-            
+        
+        out = F.interpolate(out, size=x.shape[-2:], mode="bilinear", align_corners=False)
+        # res2 = F.interpolate(res2, size=out.shape[-2:], mode="bilinear", align_corners=True)
+
+        points_idx, points = sampling_points(out, num_points, training=self.training)
+
+        coarse = point_sample(out, points, align_corners=False)
+        fine = point_sample(res2, points, align_corners=False)
+
+        feature_representation = torch.cat([coarse, fine], dim=1)
+
+        rend = self.mlp(feature_representation)
+
+        B, C, H, W = out.shape
+        points_idx = points_idx.unsqueeze(1).expand(-1, C, -1)
+        out = (out.reshape(B, C, -1)
+                    .scatter_(2, points_idx, rend)
+                    .view(B, C, H, W))
         return {"fine": out}
 
 
@@ -106,7 +135,7 @@ def point_sample(input, point_coords, **kwargs):
     if point_coords.dim() == 3:
         add_dim = True
         point_coords = point_coords.unsqueeze(2)
-    output = F.grid_sample(input, 2.0 * point_coords - 1.0)#, **kwargs)
+    output = F.grid_sample(input, 2.0 * point_coords - 1.0, **kwargs)
     if add_dim:
         output = output.squeeze(3)
     return output
