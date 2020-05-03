@@ -3,16 +3,16 @@ DATASET:
     MEAN: [0.5, 0.5, 0.5]
     STD: [0.5, 0.5, 0.5]
 TRAIN:
-    EPOCHS: 400
+    EPOCHS: 200
     BATCH_SIZE: 2
-    CROP_SIZE: 768
+    CROP_SIZE: 769
 TEST:
     BATCH_SIZE: 2
-    CROP_SIZE: (1024, 2048)
+    CROP_SIZE: (1025, 2049)
 #    TEST_MODEL_PATH: trained_models/deeplabv3_plus_xception_segmentron.pth
 
 SOLVER:
-    LR: 0.01
+    LR: 0.02
 
 MODEL:
     MODEL_NAME: "PointRend"
@@ -20,4 +20,3 @@ MODEL:
     BN_EPS_FOR_ENCODER: 1e-3
     DEEPLABV3_PLUS:
         ENABLE_DECODER: False
-

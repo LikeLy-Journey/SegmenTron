@@ -1,4 +1,5 @@
 import time
+import copy
 import datetime
 import os
 import sys
@@ -61,10 +62,11 @@ class Trainer(object):
 
         # create network
         self.model = get_segmentation_model().to(self.device)
+        
         # print params and flops
         if get_rank() == 0:
             try:
-                show_flops_params(self.model, args.device)
+                show_flops_params(copy.deepcopy(self.model), args.device)
             except Exception as e:
                 logging.warning('get flops and params error: {}'.format(e))
 
