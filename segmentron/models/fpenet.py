@@ -115,7 +115,7 @@ class FPENet(SegBaseModel):
         output = F.interpolate(output,scale_factor=2, mode = 'bilinear', align_corners=True)
         outputs = list()
         outputs.append(output)
-        return outputs
+        return {"inference_results": x, "loss_results": tuple(outputs)}
 
 
 def conv3x3(in_planes, out_planes, stride=1, padding=1, dilation=1, groups=1, bias=False):

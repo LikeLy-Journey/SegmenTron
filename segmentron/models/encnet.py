@@ -34,7 +34,7 @@ class EncNet(SegBaseModel):
             auxout = self.auxlayer(features[2])
             auxout = F.interpolate(auxout, size, mode='bilinear', align_corners=True)
             x.append(auxout)
-        return tuple(x)
+        return {"inference_results": x, "loss_results": tuple(x)}
 
 
 class _EncHead(nn.Module):

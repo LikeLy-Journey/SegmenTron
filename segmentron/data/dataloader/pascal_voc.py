@@ -71,15 +71,17 @@ class VOCSegmentation(SegmentationDataset):
 
     def __getitem__(self, index):
         img = Image.open(self.images[index]).convert('RGB')
+        meta_info = dict(filename=os.path.basename(self.images[index]))
         if self.mode == 'test':
             img = self._img_transform(img)
             if self.transform is not None:
                 img = self.transform(img)
-            return img, os.path.basename(self.images[index])
+            return img, meta_info
         mask = Image.open(self.masks[index])
         # synchronized transform
         if self.mode == 'train':
-            img, mask = self._sync_transform(img, mask)
+            img, mask, real_border = self._sync_transform(img, mask)
+            meta_info['real_border'] = real_border
         elif self.mode == 'val':
             img, mask = self._val_sync_transform(img, mask)
         else:
@@ -89,14 +91,14 @@ class VOCSegmentation(SegmentationDataset):
         if self.transform is not None:
             img = self.transform(img)
 
-        return img, mask, os.path.basename(self.images[index])
+        return img, mask, meta_info
 
     def __len__(self):
         return len(self.images)
 
     def _mask_transform(self, mask):
         target = np.array(mask).astype('int32')
-        target[target == 255] = -1
+        target[target == 255] = -1  # remove white border
         return torch.from_numpy(target).long()
 
     @property

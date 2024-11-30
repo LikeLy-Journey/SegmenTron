@@ -90,7 +90,7 @@ class CGNet(SegBaseModel):
         out = self.head(out2_cat)
         out = F.interpolate(out, size, mode='bilinear', align_corners=True)
         outputs.append(out)
-        return tuple(outputs)
+        return {"inference_results": x, "loss_results": tuple(outputs)}
 
 
 class _ChannelWiseConv(nn.Module):

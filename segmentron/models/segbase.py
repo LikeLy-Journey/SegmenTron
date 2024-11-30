@@ -10,12 +10,14 @@ from .backbones import get_segmentation_backbone
 from ..data.dataloader import datasets
 from ..modules import get_norm
 from ..config import cfg
+
 __all__ = ['SegBaseModel']
 
 
 class SegBaseModel(nn.Module):
     r"""Base Model for Semantic Segmentation
     """
+
     def __init__(self, need_backbone=True):
         super(SegBaseModel, self).__init__()
         self.nclass = datasets[cfg.DATASET.NAME].NUM_CLASS
@@ -36,9 +38,7 @@ class SegBaseModel(nn.Module):
         return c1, c2, c3, c4
 
     def demo(self, x):
-        pred = self.forward(x)
-        if self.aux:
-            pred = pred[0]
+        pred = self.forward(x)["inference_results"]
         return pred
 
     def evaluate(self, image):
@@ -66,9 +66,9 @@ class SegBaseModel(nn.Module):
                 crop_size_scaled = (int(math.ceil(crop_size[0] * scale)),
                                     int(math.ceil(crop_size[1] * scale)))
                 cur_img = _pad_image(cur_img, crop_size_scaled)
-            outputs = self.forward(cur_img)[0][..., :height, :width]
+            outputs = self.forward(cur_img)["inference_results"][..., :height, :width]
             if flip:
-                outputs += _flip_image(self.forward(_flip_image(cur_img))[0])[..., :height, :width]
+                outputs += _flip_image(self.forward(_flip_image(cur_img))["inference_results"])[..., :height, :width]
 
             score = _resize_image(outputs, h, w)
 
@@ -85,7 +85,7 @@ def _resize_image(img, h, w):
 
 def _pad_image(img, crop_size):
     b, c, h, w = img.shape
-    assert(c == 3)
+    assert (c == 3)
     padh = crop_size[0] - h if h < crop_size[0] else 0
     padw = crop_size[1] - w if w < crop_size[1] else 0
     if padh == 0 and padw == 0:
@@ -112,7 +112,7 @@ def _crop_image(img, h0, h1, w0, w1):
 
 
 def _flip_image(img):
-    assert(img.ndim == 4)
+    assert (img.ndim == 4)
     return img.flip((3))
 
 

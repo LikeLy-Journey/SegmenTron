@@ -5,6 +5,8 @@ import scipy.io as sio
 import numpy as np
 
 from PIL import Image
+from yaml import warnings
+
 from .seg_data_base import SegmentationDataset
 
 
@@ -68,20 +70,22 @@ class VOCAugSegmentation(SegmentationDataset):
     def __getitem__(self, index):
         img = Image.open(self.images[index]).convert('RGB')
         target = self._load_mat(self.masks[index])
+        meta_info = dict(filename=os.path.basename(self.images[index]))
         # synchrosized transform
         if self.mode == 'train':
-            img, target = self._sync_transform(img, target)
+            img, target, real_border = self._sync_transform(img, target)
+            meta_info['real_border'] = real_border
         elif self.mode == 'val':
             img, target = self._val_sync_transform(img, target)
         elif self.mode == 'testval':
-            logging.warn("Use mode of testval, you should set batch size=1")
+            warnings("Use mode of testval, you should set batch size=1")
             img, target = self._img_transform(img), self._mask_transform(target)
         else:
             raise RuntimeError('unknown mode for dataloader: {}'.format(self.mode))
         # general resize, normalize and toTensor
         if self.transform is not None:
             img = self.transform(img)
-        return img, target, os.path.basename(self.images[index])
+        return img, target, meta_info
 
     def _mask_transform(self, mask):
         return torch.LongTensor(np.array(mask).astype('int32'))

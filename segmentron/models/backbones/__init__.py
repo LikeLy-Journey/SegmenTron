@@ -4,3 +4,4 @@ from .mobilenet import *
 from .resnet import *
 from .hrnet import *
 from .eespnet import *
+from .swin import *

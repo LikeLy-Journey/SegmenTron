@@ -26,7 +26,7 @@ class HighResolutionNet(SegBaseModel):
         x = self.encoder(x)
         x = self.hrnet_head(x)
         x = F.interpolate(x, size=shape, mode='bilinear', align_corners=False)
-        return [x]
+        return {"inference_results": x, "loss_results": tuple([x])}
 
 
 class _HRNetHead(nn.Module):

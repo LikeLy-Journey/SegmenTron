@@ -4,11 +4,12 @@ import numpy as np
 import torch
 
 from PIL import Image
+from matplotlib import pyplot as plt
 #from torchsummary import summary
 from thop import profile
 
-__all__ = ['get_color_pallete', 'print_iou', 'set_img_color',
-           'show_prediction', 'show_colorful_images', 'save_colorful_images']
+__all__ = ['get_color_pallete', 'print_iou', 'set_img_color', 'show_prediction',
+           'show_colorful_images', 'save_colorful_images', 'show_image_with_mask_gt_legend']
 
 
 def print_iou(iu, mean_pixel_acc, class_names=None, show_no_back=False):
@@ -78,6 +79,57 @@ def save_colorful_images(prediction, filename, output_dir, palettes):
     im.save(fn)
 
 
+def approx_inverse_transform(normalized_tensor, mean, std):
+    """
+    Approximates the inverse of transforms.Compose([ToTensor(), Normalize(mean, std)]).
+
+    Args:
+        normalized_tensor: A PyTorch tensor representing the normalized image.
+        mean: A list or tuple containing the channel-wise mean used for normalization.
+        std: A list or tuple containing the channel-wise standard deviation used for normalization.
+
+    Returns:
+        A PyTorch tensor representing the (approximately) denormalized image.
+    """
+    # Use element-wise multiplication and addition for in-place operations
+    reverse_tensor = normalized_tensor.clone()
+    reverse_tensor.mul_(torch.tensor(std, dtype=reverse_tensor.dtype))
+    # Multiply each channel by its standard deviation
+    reverse_tensor.add_(torch.tensor(mean, dtype=reverse_tensor.dtype).unsqueeze(0).unsqueeze(1))
+    # Optional clamping (if values are outside 0-255 range)
+    reverse_tensor.clamp_(min=0, max=255)
+    return reverse_tensor
+
+
+def show_image_with_mask_gt_legend(image, mask, ground_truth, dataset, mean, std, classes, show_legend=True):
+    fig, ax = plt.subplots(1, 3, figsize=(15, 5))
+    # image
+    image = approx_inverse_transform(image.permute(1, 2, 0), mean, std).numpy()
+    image = Image.fromarray((image * 255).astype('uint8'))
+    ax[0].imshow(image)
+    ax[0].set_title('Image')
+    ax[0].axis('off')
+    # mask
+    mask_cls = np.unique(mask).astype(int)
+    mask = get_color_pallete(mask, dataset)
+    ax[1].imshow(mask)
+    ax[1].set_title('Predicted Mask')
+    ax[1].axis('off')
+    if show_legend:
+        legend = [classes[i] for i in mask_cls]
+        ax[1].legend(legend, loc='upper right', bbox_to_anchor=(1.5, 1))
+    # ground truth
+    gt_cls = np.unique(ground_truth.numpy().astype(int))
+    ground_truth = get_color_pallete(ground_truth.numpy(), dataset)
+    ax[2].imshow(ground_truth)
+    ax[2].set_title('Ground Truth')
+    ax[2].axis('off')
+    if show_legend:
+        legend = [classes[i] for i in gt_cls]
+        ax[2].legend(legend, loc='upper right', bbox_to_anchor=(1.5, 1))
+    plt.show()
+
+
 def get_color_pallete(npimg, dataset='cityscape'):
     """Visualize image.
 
@@ -89,7 +141,7 @@ def get_color_pallete(npimg, dataset='cityscape'):
         The dataset that model pretrained on. ('pascal_voc', 'ade20k')
     Returns
     -------
-    out_img : PIL.Image
+    out_img : PIL.Image,
         Image with color pallete
     """
     # recovery boundary
@@ -119,7 +171,7 @@ def _getvocpallete(num_cls):
         pallete[j * 3 + 1] = 0
         pallete[j * 3 + 2] = 0
         i = 0
-        while (lab > 0):
+        while lab > 0:
             pallete[j * 3 + 0] |= (((lab >> 0) & 1) << (7 - i))
             pallete[j * 3 + 1] |= (((lab >> 1) & 1) << (7 - i))
             pallete[j * 3 + 2] |= (((lab >> 2) & 1) << (7 - i))

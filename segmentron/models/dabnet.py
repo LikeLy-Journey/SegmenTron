@@ -69,7 +69,7 @@ class DABNet(SegBaseModel):
 
         outputs = list()
         outputs.append(out)
-        return outputs
+        return {"inference_results": out, "loss_results": tuple(outputs)}
 
 
 class Conv(nn.Module):

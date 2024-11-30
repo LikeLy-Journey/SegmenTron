@@ -83,4 +83,4 @@ class DFANet(SegBaseModel):
         out = F.interpolate(out, scale_factor=4, mode='bilinear', align_corners=True)
         outputs.append(out)
 
-        return tuple(outputs)
+        return {"inference_results": x, "loss_results": tuple(outputs)}

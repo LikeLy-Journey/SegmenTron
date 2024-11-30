@@ -11,7 +11,7 @@ def _set_batch_norm_attr(named_modules, attr, value):
             setattr(m[1], attr, value)
 
 
-def _get_paramters(model):
+def _get_parameters(model):
     params_list = list()
     if hasattr(model, 'encoder') and model.encoder is not None and hasattr(model, 'decoder'):
         params_list.append({'params': model.encoder.parameters(), 'lr': cfg.SOLVER.LR})
@@ -43,7 +43,7 @@ def _get_paramters(model):
 
 
 def get_optimizer(model):
-    parameters = _get_paramters(model)
+    parameters = _get_parameters(model)
     opt_lower = cfg.SOLVER.OPTIMIZER.lower()
 
     if opt_lower == 'sgd':
@@ -51,6 +51,9 @@ def get_optimizer(model):
             parameters, lr=cfg.SOLVER.LR, momentum=cfg.SOLVER.MOMENTUM, weight_decay=cfg.SOLVER.WEIGHT_DECAY)
     elif opt_lower == 'adam':
         optimizer = optim.Adam(
+            parameters, lr=cfg.SOLVER.LR, eps=cfg.SOLVER.EPSILON, weight_decay=cfg.SOLVER.WEIGHT_DECAY)
+    elif opt_lower == 'adamw':
+        optimizer = optim.AdamW(
             parameters, lr=cfg.SOLVER.LR, eps=cfg.SOLVER.EPSILON, weight_decay=cfg.SOLVER.WEIGHT_DECAY)
     elif opt_lower == 'adadelta':
         optimizer = optim.Adadelta(

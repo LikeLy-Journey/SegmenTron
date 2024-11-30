@@ -53,6 +53,8 @@ cfg.TRAIN.PRETRAINED_MODEL_PATH = ''
 cfg.TRAIN.BACKBONE_PRETRAINED = True
 # backbone pretrained model path, if not specific, will load from url when backbone pretrained enabled
 cfg.TRAIN.BACKBONE_PRETRAINED_PATH = ''
+# backbone pretrained model key, if not specific, will load dict directly from checkpoint
+cfg.TRAIN.BACKBONE_PRETRAINED_KEY = ''
 # resume model path
 cfg.TRAIN.RESUME_MODEL_PATH = ''
 # whether to use synchronize bn
@@ -70,7 +72,7 @@ cfg.SOLVER.EPSILON = 1e-8
 # optimizer momentum
 cfg.SOLVER.MOMENTUM = 0.9
 # weight decay
-cfg.SOLVER.WEIGHT_DECAY = 1e-4 #0.00004
+cfg.SOLVER.WEIGHT_DECAY = 1e-4  # 0.00004
 # decoder lr x10
 cfg.SOLVER.DECODER_LR_FACTOR = 10.0
 # lr scheduler mode
@@ -109,7 +111,7 @@ cfg.TEST.FLIP = False
 
 ########################## visual config ###########################################
 # visual result output dir
-cfg.VISUAL.OUTPUT_DIR = '../runs/visual/'
+cfg.VISUAL.OUTPUT_DIR = 'runs/visual/'
 
 ########################## model #######################################
 # model name
@@ -126,7 +128,7 @@ cfg.MODEL.MULTI_LOSS_WEIGHT = [1.0]
 cfg.MODEL.DEFAULT_GROUP_NUMBER = 32
 # whole model default epsilon
 cfg.MODEL.DEFAULT_EPSILON = 1e-5
-# batch norm, support ['BN', 'SyncBN', 'FrozenBN', 'GN', 'nnSyncBN']
+# batch norm, support ['BN', 'SyncBN', 'FrozenBN', 'GN', 'nnSyncBN', 'LN']
 cfg.MODEL.BN_TYPE = 'BN'
 # batch norm epsilon for encoder, if set None will use api default value.
 cfg.MODEL.BN_EPS_FOR_ENCODER = None
@@ -165,7 +167,6 @@ cfg.MODEL.OCNet.OC_ARCH = 'base'
 cfg.MODEL.ENCNET.SE_LOSS = True
 cfg.MODEL.ENCNET.SE_WEIGHT = 0.2
 cfg.MODEL.ENCNET.LATERAL = True
-
 
 ########################## CCNET config ######################################
 cfg.MODEL.CCNET.RECURRENCE = 2
@@ -211,3 +212,21 @@ cfg.MODEL.HRNET.STAGE4.NUM_CHANNELS = [32, 64, 128, 256]
 cfg.MODEL.HRNET.STAGE4.BLOCK = 'BASIC'
 cfg.MODEL.HRNET.STAGE4.FUSE_METHOD = 'SUM'
 
+########################## UperNet config ####################################
+cfg.MODEL.UPERNET.IN_CHANNELS = [96, 192, 384, 768]
+cfg.MODEL.UPERNET.CHANNELS = 512
+cfg.MODEL.UPERNET.POOL_SCALES = [1, 2, 3, 6]
+
+########################## MaskFormer config #################################
+# mask_former model config
+cfg.MODEL.MASKFORMER.IN_CHANNELS = [96, 192, 384, 768]
+cfg.MODEL.MASKFORMER.FEAT_CHANNELS = 256
+cfg.MODEL.MASKFORMER.OUT_CHANNELS = 256
+cfg.MODEL.MASKFORMER.QUERIES = 100
+cfg.MODEL.MASKFORMER.DECODE_LAYERS = 6
+# loss
+cfg.MODEL.MASKFORMER.DEEP_SUPERVISION = True
+cfg.MODEL.MASKFORMER.NO_OBJECT_WEIGHT = 0.1
+cfg.MODEL.MASKFORMER.CLASS_WEIGHT = 1.0
+cfg.MODEL.MASKFORMER.DICE_WEIGHT = 1.0
+cfg.MODEL.MASKFORMER.MASK_WEIGHT = 20.0

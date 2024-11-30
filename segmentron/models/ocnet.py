@@ -27,7 +27,7 @@ class OCNet(SegBaseModel):
 
         self.__setattr__('decoder', ['head', 'auxlayer'] if self.aux else ['head'])
 
-    def forward(self, x):
+    def forward(self, x, meta_info=None):
         size = x.size()[2:]
         _, _, c3, c4 = self.base_forward(x)
         outputs = []

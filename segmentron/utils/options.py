@@ -1,17 +1,20 @@
 import argparse
 
+
 def parse_args():
     parser = argparse.ArgumentParser(description='Segmentron')
-    parser.add_argument('--config-file', metavar="FILE",
+    parser.add_argument('--config-file', metavar="FILE", default='configs/pascal_voc_maskformer_swin.yaml',
                         help='config file path')
     # cuda setting
     parser.add_argument('--no-cuda', action='store_true', default=False,
                         help='disables CUDA training')
+    # distributed training
+    parser.add_argument('--use-amp', action='store_true', default=True, help='Use AMP for mixed precision training.')
     parser.add_argument('--local_rank', type=int, default=0)
     # checkpoint and log
     parser.add_argument('--resume', type=str, default=None,
                         help='put the path to resuming file if needed')
-    parser.add_argument('--log-iter', type=int, default=10,
+    parser.add_argument('--log-iter', type=int, default=20,
                         help='print log every log-iter')
     # for evaluation
     parser.add_argument('--val-epoch', type=int, default=1,

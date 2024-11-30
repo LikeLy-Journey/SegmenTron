@@ -74,9 +74,11 @@ class COCOSegmentation(SegmentationDataset):
         cocotarget = coco.loadAnns(coco.getAnnIds(imgIds=img_id))
         mask = Image.fromarray(self._gen_seg_mask(
             cocotarget, img_metadata['height'], img_metadata['width']))
+        meta_info = dict(filename=os.path.basename(path))
         # synchrosized transform
         if self.mode == 'train':
-            img, mask = self._sync_transform(img, mask)
+            img, mask, real_border = self._sync_transform(img, mask)
+            meta_info['real_border'] = real_border
         elif self.mode == 'val':
             img, mask = self._val_sync_transform(img, mask)
         else:
@@ -85,7 +87,7 @@ class COCOSegmentation(SegmentationDataset):
         # general resize, normalize and toTensor
         if self.transform is not None:
             img = self.transform(img)
-        return img, mask, os.path.basename(path)
+        return img, mask, meta_info
 
     def __len__(self):
         return len(self.ids)

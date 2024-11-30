@@ -67,7 +67,7 @@ class EDANet(SegBaseModel):
         # if not self.training:
         #     output = F.interpolate(output, scale_factor=2, mode='bilinear', align_corners=True)
 
-        return tuple([output])
+        return {"inference_results": x, "loss_results": tuple([output])}
 
 
 class DownsamplerBlock(nn.Module):

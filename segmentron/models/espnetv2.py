@@ -55,7 +55,7 @@ class ESPNetV2(SegBaseModel):
             auxout = F.interpolate(proj_merge_l3_bef_act, size, mode='bilinear', align_corners=True)
             outputs.append(auxout)
 
-        return tuple(outputs)
+        return {"inference_results": x, "loss_results": tuple(outputs)}
 
 
 # different from PSPNet

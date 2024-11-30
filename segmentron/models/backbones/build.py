@@ -27,6 +27,12 @@ model_urls = {
     'xception65': 'https://github.com/LikeLy-Journey/SegmenTron/releases/download/v0.1.0/tf-xception65-270e81cf.pth',
     'hrnet_w18_small_v1': 'https://github.com/LikeLy-Journey/SegmenTron/releases/download/v0.1.0/hrnet-w18-small-v1-08f8ae64.pth',
     'mobilenet_v2': 'https://github.com/LikeLy-Journey/SegmenTron/releases/download/v0.1.0/mobilenetV2-15498621.pth',
+    'swin_t_224': 'https://github.com/SwinTransformer/storage/releases/download/v1.0.8/swin_tiny_patch4_window7_224_22k.pth',
+    'swin_s_224': 'https://github.com/SwinTransformer/storage/releases/download/v1.0.8/swin_small_patch4_window7_224_22k.pth',
+    'swin_b_224': 'https://github.com/SwinTransformer/storage/releases/download/v1.0.0/swin_base_patch4_window7_224_22k.pth',
+    'swin_b_384': 'https://github.com/SwinTransformer/storage/releases/download/v1.0.0/swin_base_patch4_window12_384_22k.pth',
+    'swin_l_224': 'https://github.com/SwinTransformer/storage/releases/download/v1.0.0/swin_large_patch4_window7_224_22k.pth',
+    'swin_l_384': 'https://github.com/SwinTransformer/storage/releases/download/v1.0.0/swin_large_patch4_window12_384_22k.pth',
 }
 
 
@@ -36,7 +42,10 @@ def load_backbone_pretrained(model, backbone):
             logging.info('Load backbone pretrained model from {}'.format(
                 cfg.TRAIN.BACKBONE_PRETRAINED_PATH
             ))
-            msg = model.load_state_dict(torch.load(cfg.TRAIN.BACKBONE_PRETRAINED_PATH), strict=False)
+            checkpoint = torch.load(cfg.TRAIN.BACKBONE_PRETRAINED_PATH)
+            if cfg.TRAIN.BACKBONE_PRETRAINED_KEY:
+                checkpoint = checkpoint[cfg.TRAIN.BACKBONE_PRETRAINED_KEY]
+            msg = model.load_state_dict(checkpoint, strict=False)
             logging.info(msg)
         elif backbone not in model_urls:
             logging.info('{} has no pretrained model'.format(backbone))
@@ -44,13 +53,16 @@ def load_backbone_pretrained(model, backbone):
         else:
             logging.info('load backbone pretrained model from url..')
             try:
-                msg = model.load_state_dict(model_zoo.load_url(model_urls[backbone]), strict=False)
+                checkpoint = model_zoo.load_url(model_urls[backbone])
             except Exception as e:
                 logging.warning(e)
                 logging.info('Use torch download failed, try custom method!')
-                
-                msg = model.load_state_dict(torch.load(download(model_urls[backbone], 
-                        path=os.path.join(torch.hub._get_torch_home(), 'checkpoints'))), strict=False)
+
+                checkpoint = torch.load(
+                    download(model_urls[backbone], path=os.path.join(torch.hub._get_torch_home(), 'checkpoints')))
+            if cfg.TRAIN.BACKBONE_PRETRAINED_KEY:
+                checkpoint = checkpoint[cfg.TRAIN.BACKBONE_PRETRAINED_KEY]
+            msg = model.load_state_dict(checkpoint, strict=False)
             logging.info(msg)
 
 
@@ -61,4 +73,3 @@ def get_segmentation_backbone(backbone, norm_layer=torch.nn.BatchNorm2d):
     model = BACKBONE_REGISTRY.get(backbone)(norm_layer)
     load_backbone_pretrained(model, backbone)
     return model
-

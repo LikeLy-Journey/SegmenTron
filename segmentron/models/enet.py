@@ -103,7 +103,7 @@ class ENet(SegBaseModel):
 
         # out
         x = self.fullconv(x)
-        return tuple([x])
+        return {"inference_results": x, "loss_results": tuple([x])}
 
 
 class InitialBlock(nn.Module):

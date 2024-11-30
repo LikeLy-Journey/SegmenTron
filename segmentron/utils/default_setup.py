@@ -8,6 +8,7 @@ from .logger import setup_logger
 from .env import seed_all_rng
 from ..config import cfg
 
+
 def default_setup(args):
     num_gpus = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
     args.num_gpus = num_gpus

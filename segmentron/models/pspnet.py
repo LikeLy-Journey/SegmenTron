@@ -28,7 +28,7 @@ class PSPNet(SegBaseModel):
 
     def forward(self, x):
         size = x.size()[2:]
-        _, _, c3, c4 = self.encoder(x)
+        c1, c2, c3, c4 = self.encoder(x)
         outputs = []
         x = self.head(c4)
         x = F.interpolate(x, size, mode='bilinear', align_corners=True)
@@ -38,13 +38,13 @@ class PSPNet(SegBaseModel):
             auxout = self.auxlayer(c3)
             auxout = F.interpolate(auxout, size, mode='bilinear', align_corners=True)
             outputs.append(auxout)
-        return tuple(outputs)
+        return {"inference_results": x, "loss_results": tuple(outputs)}
 
 
 class _PSPHead(nn.Module):
     def __init__(self, nclass, norm_layer=nn.BatchNorm2d, norm_kwargs=None, **kwargs):
         super(_PSPHead, self).__init__()
-        self.psp = PyramidPooling(2048, norm_layer=norm_layer, norm_kwargs=norm_kwargs)
+        self.psp = PyramidPooling(2048, norm_layer=norm_layer)
         self.block = nn.Sequential(
             nn.Conv2d(4096, 512, 3, padding=1, bias=False),
             norm_layer(512, **({} if norm_kwargs is None else norm_kwargs)),

@@ -1,0 +1,26 @@
+DATASET:
+    NAME: "pascal_voc"
+    MEAN: [0.5, 0.5, 0.5]
+    STD: [0.5, 0.5, 0.5]
+    MODE: 'val'
+TRAIN:
+    EPOCHS: 200
+    BATCH_SIZE: 4
+    CROP_SIZE: 713
+TEST:
+    BATCH_SIZE: 4
+    CROP_SIZE: (1025, 2049)
+#    TEST_MODEL_PATH: trained_models/pspnet_resnet101_segmentron.pth
+
+SOLVER:
+    LR: 0.01
+    AUX: True
+    AUX_WEIGHT: 0.4
+
+AUG:
+    BLUR_PROB: 0.5
+
+MODEL:
+    MODEL_NAME: "PSPNet"
+    BACKBONE: "resnet101"
+    OUTPUT_STRIDE: 8

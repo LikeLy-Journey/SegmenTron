@@ -37,7 +37,7 @@ class UNet(SegBaseModel):
         x = F.interpolate(x, size, mode='bilinear', align_corners=True)
 
         outputs.append(x)
-        return tuple(outputs)
+        return {"inference_results": x, "loss_results": tuple(outputs)}
 
 
 class _UNetHead(nn.Module):

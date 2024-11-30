@@ -49,7 +49,7 @@ class LEDNet(SegBaseModel):
         x = F.interpolate(x, size, mode='bilinear', align_corners=True)
         outputs.append(x)
 
-        return tuple(outputs)
+        return {"inference_results": x, "loss_results": tuple(outputs)}
 
 
 class Downsampling(nn.Module):

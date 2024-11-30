@@ -105,7 +105,7 @@ class SegmentationDataset(object):
             img = self.color_jitter(img)
         # final transform
         img, mask = self._img_transform(img), self._mask_transform(mask)
-        return img, mask
+        return img, mask, [min(ow, crop_size[1]), min(oh, crop_size[0])]
 
     def _img_transform(self, img):
         return np.array(img)

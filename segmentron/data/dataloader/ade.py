@@ -50,15 +50,17 @@ class ADE20KSegmentation(SegmentationDataset):
 
     def __getitem__(self, index):
         img = Image.open(self.images[index]).convert('RGB')
+        meta_info = dict(filename=os.path.basename(self.images[index]))
         if self.mode == 'test':
             img = self._img_transform(img)
             if self.transform is not None:
                 img = self.transform(img)
-            return img, os.path.basename(self.images[index])
+            return img, meta_info
         mask = Image.open(self.masks[index])
-        # synchrosized transform
+        # synchronized transform
         if self.mode == 'train':
-            img, mask = self._sync_transform(img, mask)
+            img, mask, real_border = self._sync_transform(img, mask)
+            meta_info['real_border'] = real_border
         elif self.mode == 'val':
             img, mask = self._val_sync_transform(img, mask)
         else:
@@ -67,7 +69,7 @@ class ADE20KSegmentation(SegmentationDataset):
         # general resize, normalize and to Tensor
         if self.transform is not None:
             img = self.transform(img)
-        return img, mask, os.path.basename(self.images[index])
+        return img, mask, meta_info
 
     def _mask_transform(self, mask):
         return torch.LongTensor(np.array(mask).astype('int32') - 1)

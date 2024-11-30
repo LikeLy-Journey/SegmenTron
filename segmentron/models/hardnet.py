@@ -93,7 +93,7 @@ class HardNet(SegBaseModel):
             size=(size_in[2], size_in[3]),
             mode="bilinear",
             align_corners=True)
-        return [out]
+        return {"inference_results": out, "loss_results": tuple([out])}
 
 
 class ConvLayer(nn.Sequential):

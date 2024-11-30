@@ -6,7 +6,7 @@ import sys
 
 cur_path = os.path.abspath(os.path.dirname(__file__))
 root_path = os.path.split(cur_path)[0]
-sys.path.append(root_path)
+sys.path.append(root_path)  # It modifies the search path used by Python's import statement.
 
 import logging
 import torch
@@ -15,7 +15,7 @@ import torch.utils.data as data
 import torch.nn.functional as F
 
 from torchvision import transforms
-from segmentron.data.dataloader import get_segmentation_dataset
+from segmentron.data.dataloader import get_segmentation_dataset, custom_collate_fn
 from segmentron.models.model_zoo import get_segmentation_model
 from segmentron.solver.loss import get_segmentation_loss
 from segmentron.solver.optimizer import get_optimizer
@@ -28,10 +28,12 @@ from segmentron.utils.default_setup import default_setup
 from segmentron.utils.visualize import show_flops_params
 from segmentron.config import cfg
 
+
 class Trainer(object):
     def __init__(self, args):
         self.args = args
         self.device = torch.device(args.device)
+        logging.info("Using device: {}".format(torch.cuda.current_device() if args.device == 'cuda' else 'cpu'))
 
         # image transform
         input_transform = transforms.Compose([
@@ -47,22 +49,25 @@ class Trainer(object):
         self.max_iters = cfg.TRAIN.EPOCHS * self.iters_per_epoch
 
         train_sampler = make_data_sampler(train_dataset, shuffle=True, distributed=args.distributed)
-        train_batch_sampler = make_batch_data_sampler(train_sampler, cfg.TRAIN.BATCH_SIZE, self.max_iters, drop_last=True)
+        train_batch_sampler = make_batch_data_sampler(train_sampler, cfg.TRAIN.BATCH_SIZE, self.max_iters,
+                                                      drop_last=True)
         val_sampler = make_data_sampler(val_dataset, False, args.distributed)
         val_batch_sampler = make_batch_data_sampler(val_sampler, cfg.TEST.BATCH_SIZE, drop_last=False)
 
         self.train_loader = data.DataLoader(dataset=train_dataset,
                                             batch_sampler=train_batch_sampler,
                                             num_workers=cfg.DATASET.WORKERS,
-                                            pin_memory=True)
+                                            pin_memory=True,
+                                            collate_fn=custom_collate_fn)
         self.val_loader = data.DataLoader(dataset=val_dataset,
                                           batch_sampler=val_batch_sampler,
                                           num_workers=cfg.DATASET.WORKERS,
-                                          pin_memory=True)
+                                          pin_memory=True,
+                                          collate_fn=custom_collate_fn)
 
         # create network
         self.model = get_segmentation_model().to(self.device)
-        
+
         # print params and flops
         if get_rank() == 0:
             try:
@@ -114,7 +119,6 @@ class Trainer(object):
         self.metric = SegmentationMetric(train_dataset.num_class, args.distributed)
         self.best_pred = 0.0
 
-
     def train(self):
         self.save_to_disk = get_rank() == 0
         epochs, max_iters, iters_per_epoch = cfg.TRAIN.EPOCHS, self.max_iters, self.iters_per_epoch
@@ -125,25 +129,15 @@ class Trainer(object):
 
         self.model.train()
         iteration = self.start_epoch * iters_per_epoch if self.start_epoch > 0 else 0
-        for (images, targets, _) in self.train_loader:
+        for (images, targets, meta_info) in self.train_loader:
             epoch = iteration // iters_per_epoch + 1
             iteration += 1
 
             images = images.to(self.device)
             targets = targets.to(self.device)
 
-            outputs = self.model(images)
-            loss_dict = self.criterion(outputs, targets)
+            losses_reduced, loss_dict_reduced = self.train_step(images, targets)
 
-            losses = sum(loss for loss in loss_dict.values())
-
-            # reduce losses over all GPUs for logging purposes
-            loss_dict_reduced = reduce_loss_dict(loss_dict)
-            losses_reduced = sum(loss for loss in loss_dict_reduced.values())
-
-            self.optimizer.zero_grad()
-            losses.backward()
-            self.optimizer.step()
             self.lr_scheduler.step()
 
             eta_seconds = ((time.time() - start_time) / iteration) * (max_iters - iteration)
@@ -151,12 +145,15 @@ class Trainer(object):
 
             if iteration % log_per_iters == 0 and self.save_to_disk:
                 logging.info(
-                    "Epoch: {:d}/{:d} || Iters: {:d}/{:d} || Lr: {:.6f} || "
+                    "Epoch: {:d}/{:d} || Iters: {:d}/{:d} || Lr: {:.4e} || "
                     "Loss: {:.4f} || Cost Time: {} || Estimated Time: {}".format(
                         epoch, epochs, iteration % iters_per_epoch, iters_per_epoch,
                         self.optimizer.param_groups[0]['lr'], losses_reduced.item(),
                         str(datetime.timedelta(seconds=int(time.time() - start_time))),
                         eta_string))
+                if cfg.SOLVER.AUX:
+                    logging.info("Loss details: {}".format(
+                        ["{}: {:.4f}".format(k, v.item()) for k, v in loss_dict_reduced.items()]))
 
             if iteration % self.iters_per_epoch == 0 and self.save_to_disk:
                 save_checkpoint(self.model, epoch, self.optimizer, self.lr_scheduler, is_best=False)
@@ -168,8 +165,22 @@ class Trainer(object):
         total_training_time = time.time() - start_time
         total_training_str = str(datetime.timedelta(seconds=total_training_time))
         logging.info(
-            "Total training time: {} ({:.4f}s / it)".format(
-                total_training_str, total_training_time / max_iters))
+            "Total training time: {} ({:.4f}s / it)".format(total_training_str, total_training_time / max_iters))
+
+    def train_step(self, images, targets):
+        outputs = self.model(images)["loss_results"]
+        loss_dict = self.criterion(outputs, targets)
+
+        losses = sum(loss for loss in loss_dict.values())
+
+        # reduce losses over all GPUs for logging purposes
+        loss_dict_reduced = reduce_loss_dict(loss_dict)
+        losses_reduced = sum(loss for loss in loss_dict_reduced.values())
+
+        self.optimizer.zero_grad()
+        losses.backward()
+        self.optimizer.step()
+        return losses_reduced, loss_dict_reduced
 
     def validation(self, epoch):
         self.metric.reset()
@@ -185,13 +196,13 @@ class Trainer(object):
 
             with torch.no_grad():
                 if cfg.DATASET.MODE == 'val' or cfg.TEST.CROP_SIZE is None:
-                    output = model(image)[0]
+                    output = model(image)["inference_results"]
                 else:
                     size = image.size()[2:]
                     pad_height = cfg.TEST.CROP_SIZE[0] - size[0]
                     pad_width = cfg.TEST.CROP_SIZE[1] - size[1]
                     image = F.pad(image, (0, pad_height, 0, pad_width))
-                    output = model(image)[0]
+                    output = model(image)["inference_results"]
                     output = output[..., :size[0], :size[1]]
 
             self.metric.update(output, target)
@@ -202,8 +213,31 @@ class Trainer(object):
         synchronize()
         if self.best_pred < mIoU and self.save_to_disk:
             self.best_pred = mIoU
-            logging.info('Epoch {} is the best model, best pixAcc: {:.3f}, mIoU: {:.3f}, save the model..'.format(epoch, pixAcc * 100, mIoU * 100))
+            logging.info('Epoch {} is the best model, best pixAcc: {:.3f}, mIoU: {:.3f}, save the model..'.format(epoch,
+                                                                                                                  pixAcc * 100,
+                                                                                                                  mIoU * 100))
             save_checkpoint(model, epoch, is_best=True)
+
+
+class AMPTrainer(Trainer):
+    def __init__(self, args):
+        super(AMPTrainer, self).__init__(args)
+        self.scaler = torch.cuda.amp.GradScaler()
+        logging.info("Using mixed precision training")
+
+    def train_step(self, images, targets):
+        with torch.cuda.amp.autocast():
+            outputs = self.model(images)["loss_results"]
+            loss_dict = self.criterion(outputs, targets)
+            losses = sum(loss for loss in loss_dict.values())
+            loss_dict_reduced = reduce_loss_dict(loss_dict)
+            losses_reduced = sum(loss for loss in loss_dict_reduced.values())
+
+        self.optimizer.zero_grad()
+        self.scaler.scale(losses).backward()
+        self.scaler.step(self.optimizer)
+        self.scaler.update()
+        return losses_reduced, loss_dict_reduced
 
 
 if __name__ == '__main__':
@@ -219,5 +253,5 @@ if __name__ == '__main__':
     default_setup(args)
 
     # create a trainer and start train
-    trainer = Trainer(args)
+    trainer = AMPTrainer(args) if args.distributed and args.use_amp else Trainer(args)
     trainer.train()

@@ -86,8 +86,8 @@ def batch_pix_accuracy(output, target):
     predict = torch.argmax(output.long(), 1) + 1
     target = target.long() + 1
 
-    pixel_labeled = torch.sum(target > 0)#.item()
-    pixel_correct = torch.sum((predict == target) * (target > 0))#.item()
+    pixel_labeled = torch.sum(target > 0)  # .item()
+    pixel_correct = torch.sum((predict == target) * (target > 0))  # .item()
     assert pixel_correct <= pixel_labeled, "Correct area should be smaller than Labeled"
     return pixel_correct, pixel_labeled
 
@@ -127,7 +127,7 @@ def pixelAccuracy(imPred, imLab):
     pixel_labeled = np.sum(imLab >= 0)
     pixel_correct = np.sum((imPred == imLab) * (imLab >= 0))
     pixel_accuracy = 1.0 * pixel_correct / pixel_labeled
-    return (pixel_accuracy, pixel_correct, pixel_labeled)
+    return pixel_accuracy, pixel_correct, pixel_labeled
 
 
 def intersectionAndUnion(imPred, imLab, numClass):
@@ -151,7 +151,7 @@ def intersectionAndUnion(imPred, imLab, numClass):
     (area_pred, _) = np.histogram(imPred, bins=numClass, range=(1, numClass))
     (area_lab, _) = np.histogram(imLab, bins=numClass, range=(1, numClass))
     area_union = area_pred + area_lab - area_intersection
-    return (area_intersection, area_union)
+    return area_intersection, area_union
 
 
 def hist_info(pred, label, num_cls):

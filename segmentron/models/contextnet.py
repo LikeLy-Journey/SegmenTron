@@ -48,7 +48,7 @@ class ContextNet(SegBaseModel):
             auxout = F.interpolate(auxout, size, mode='bilinear', align_corners=True)
             outputs.append(auxout)
 
-        return outputs
+        return {"inference_results": x, "loss_results": tuple(outputs)}
 
 
 class Custom_Conv(nn.Module):

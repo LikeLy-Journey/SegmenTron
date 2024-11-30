@@ -8,6 +8,7 @@ from ..modules import _FCNHead
 from ..modules.cc_attention import CrissCrossAttention
 from ..config import cfg
 
+
 @MODEL_REGISTRY.register()
 class CCNet(SegBaseModel):
     r"""CCNet
@@ -36,7 +37,7 @@ class CCNet(SegBaseModel):
             auxout = self.auxlayer(c3)
             auxout = F.interpolate(auxout, size, mode='bilinear', align_corners=True)
             outputs.append(auxout)
-        return tuple(outputs)
+        return {"inference_results": x, "loss_results": tuple(outputs)}
 
 
 class _CCHead(nn.Module):

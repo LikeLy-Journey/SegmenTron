@@ -45,11 +45,8 @@ if __name__ == '__main__':
         _TARGET_DIR = default_dir
     makedirs(_TARGET_DIR)
 
-    if os.path.exists(default_dir):
-        print('{} is already exist!'.format(default_dir))
-    else:
-        try:
-            os.symlink(_TARGET_DIR, default_dir)
-        except Exception as e:
-            print(e)
-        download_ade(_TARGET_DIR, overwrite=False)
+    try:
+        os.symlink(_TARGET_DIR, default_dir)
+    except Exception as e:
+        print(e)
+    download_ade(_TARGET_DIR, overwrite=False)

@@ -4,7 +4,7 @@ import torch.nn as nn
 
 from collections import OrderedDict
 
-__all__ = ['_ConvBNPReLU', '_ConvBN', '_BNPReLU', '_ConvBNReLU', '_DepthwiseConv', 'InvertedResidual',
+__all__ = ['_ConvBNPReLU', '_ConvBN', '_BNPReLU', '_ConvBNReLU', '_ConvGNReLU', '_DepthwiseConv', 'InvertedResidual',
            'SeparableConv2d']
 
 _USE_FIXED_PAD = False
@@ -73,6 +73,21 @@ class _ConvBNReLU(nn.Module):
     def forward(self, x):
         x = self.conv(x)
         x = self.bn(x)
+        x = self.relu(x)
+        return x
+
+
+class _ConvGNReLU(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0,
+                 dilation=1, groups=1, relu6=False, num_groups=32):
+        super(_ConvGNReLU, self).__init__()
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding, dilation, groups, bias=False)
+        self.gn = nn.GroupNorm(num_groups, out_channels)
+        self.relu = nn.ReLU6(True) if relu6 else nn.ReLU(True)
+
+    def forward(self, x):
+        x = self.conv(x)
+        x = self.gn(x)
         x = self.relu(x)
         return x
 

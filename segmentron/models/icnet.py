@@ -41,7 +41,7 @@ class ICNet(SegBaseModel):
 
         outputs = self.head(x_sub1, x_sub2, x_sub4, size)
 
-        return tuple(outputs)
+        return {"inference_results": x, "loss_results": tuple(outputs)}
 
 
 class _ICHead(nn.Module):

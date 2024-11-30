@@ -23,7 +23,7 @@ class FastSCNN(SegBaseModel):
         self.global_feature_extractor = GlobalFeatureExtractor(64, [64, 96, 128], 128, 6, [3, 3, 3],
                                                                norm_layer=self.norm_layer)
         self.feature_fusion = FeatureFusionModule(64, 128, 128, norm_layer=self.norm_layer)
-        self.classifier = Classifer(128, self.nclass, norm_layer=self.norm_layer)
+        self.classifier = Classifier(128, self.nclass, norm_layer=self.norm_layer)
 
         decoder_list = ['learning_to_downsample', 'global_feature_extractor',
                         'feature_fusion', 'classifier']
@@ -63,7 +63,7 @@ class FastSCNN(SegBaseModel):
             auxout2 = F.interpolate(auxout2, size, mode='bilinear', align_corners=True)
             outputs.append(auxout1)
             outputs.append(auxout2)
-        return tuple(outputs)
+        return {"inference_results": x, "loss_results": tuple(outputs)}
 
 
 class LearningToDownsample(nn.Module):
@@ -140,11 +140,11 @@ class FeatureFusionModule(nn.Module):
         return self.relu(out)
 
 
-class Classifer(nn.Module):
-    """Classifer"""
+class Classifier(nn.Module):
+    """Classifier"""
 
     def __init__(self, dw_channels, num_classes, stride=1, norm_layer=nn.BatchNorm2d):
-        super(Classifer, self).__init__()
+        super(Classifier, self).__init__()
         self.dsconv1 = SeparableConv2d(dw_channels, dw_channels, stride=stride, relu_first=False,
                                        norm_layer=norm_layer)
         self.dsconv2 = SeparableConv2d(dw_channels, dw_channels, stride=stride, relu_first=False,

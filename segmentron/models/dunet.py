@@ -41,7 +41,7 @@ class DUNet(SegBaseModel):
             auxout = self.auxlayer(c3)
             auxout = self.aux_dupsample(auxout)
             outputs.append(auxout)
-        return tuple(outputs)
+        return {"inference_results": x, "loss_results": tuple(outputs)}
 
 
 class FeatureFused(nn.Module):

@@ -2,8 +2,11 @@ import os
 import hashlib
 import errno
 import tarfile
+
+import torch
 from six.moves import urllib
 from torch.utils.model_zoo import tqdm
+
 
 def gen_bar_updater():
     pbar = tqdm(total=None)
@@ -15,6 +18,7 @@ def gen_bar_updater():
         pbar.update(progress_bytes - pbar.n)
 
     return bar_update
+
 
 def check_integrity(fpath, md5=None):
     if md5 is None:
@@ -31,6 +35,7 @@ def check_integrity(fpath, md5=None):
         return False
     return True
 
+
 def makedir_exist_ok(dirpath):
     try:
         os.makedirs(dirpath)
@@ -39,6 +44,7 @@ def makedir_exist_ok(dirpath):
             pass
         else:
             pass
+
 
 def download_url(url, root, filename=None, md5=None):
     """Download a file from a url and place it in root."""
@@ -63,7 +69,20 @@ def download_url(url, root, filename=None, md5=None):
                       ' Downloading ' + url + ' to ' + fpath)
                 urllib.request.urlretrieve(url, fpath, reporthook=gen_bar_updater())
 
+
 def download_extract(url, root, filename, md5):
     download_url(url, root, filename, md5)
     with tarfile.open(os.path.join(root, filename), "r") as tar:
         tar.extractall(path=root)
+
+
+def custom_collate_fn(batch):
+    images = [item[0] for item in batch]
+    masks = [item[1] for item in batch]
+    batch_meta_info = {}
+    for item in batch:
+        for key, value in item[2].items():
+            if key not in batch_meta_info:
+                batch_meta_info[key] = []
+            batch_meta_info[key].append(value)
+    return torch.stack(images), torch.stack(masks), batch_meta_info

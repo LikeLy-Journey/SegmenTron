@@ -49,7 +49,7 @@ class BiSeNet(SegBaseModel):
             auxout2 = self.auxlayer2(context_out[1])
             auxout2 = F.interpolate(auxout2, size, mode='bilinear', align_corners=True)
             outputs.append(auxout2)
-        return tuple(outputs)
+        return {"inference_results": x, "loss_results": tuple(outputs)}
 
 
 class _BiSeHead(nn.Module):

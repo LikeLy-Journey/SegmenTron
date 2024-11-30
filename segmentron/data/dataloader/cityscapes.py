@@ -66,14 +66,16 @@ class CitySegmentation(SegmentationDataset):
 
     def __getitem__(self, index):
         img = Image.open(self.images[index]).convert('RGB')
+        meta_info = dict(filename=os.path.basename(self.images[index]))
         if self.mode == 'test':
             if self.transform is not None:
                 img = self.transform(img)
-            return img, os.path.basename(self.images[index])
+            return img, meta_info
         mask = Image.open(self.mask_paths[index])
         # synchrosized transform
         if self.mode == 'train':
-            img, mask = self._sync_transform(img, mask)
+            img, mask, real_border = self._sync_transform(img, mask)
+            meta_info['real_border'] = real_border
         elif self.mode == 'val':
             img, mask = self._val_sync_transform(img, mask)
         else:
@@ -82,7 +84,7 @@ class CitySegmentation(SegmentationDataset):
         # general resize, normalize and toTensor
         if self.transform is not None:
             img = self.transform(img)
-        return img, mask, os.path.basename(self.images[index])
+        return img, mask, meta_info
 
     def _mask_transform(self, mask):
         target = self._class_to_index(np.array(mask).astype('int32'))

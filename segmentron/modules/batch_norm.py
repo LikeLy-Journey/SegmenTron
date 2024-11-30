@@ -116,7 +116,7 @@ def get_norm(norm):
     Returns:
         nn.Module or None: the normalization layer
     """
-    support_norm_type = ['BN', 'SyncBN', 'FrozenBN', 'GN', 'nnSyncBN']
+    support_norm_type = ['BN', 'SyncBN', 'FrozenBN', 'GN', 'nnSyncBN', 'LN']
     assert norm in support_norm_type, 'Unknown norm type {}, support norm types are {}'.format(
                                                                         norm, support_norm_type)
     if isinstance(norm, str):
@@ -128,6 +128,7 @@ def get_norm(norm):
             "FrozenBN": FrozenBatchNorm2d,
             "GN": groupNorm,
             "nnSyncBN": nn.SyncBatchNorm,  # keep for debugging
+            "LN": nn.LayerNorm,
         }[norm]
     return norm
 
